@@ -1,0 +1,6 @@
+---
+title: "Projet Dettes par pays"
+author: "Margaux Bailleul & Oriane Duclos"
+date: "2023-11-22"
+output: pdf_document
+---
