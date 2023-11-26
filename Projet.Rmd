@@ -6,7 +6,7 @@ output: pdf_document
 ---
 
 ```{r}
-data <- read.csv("archive/Dette_par_pays.csv")
+data <- read.csv("archive/Dette_parpays.csv", header = TRUE)
 head(data)
 ```
 
@@ -14,50 +14,10 @@ head(data)
 summary(data)
 ```
 
-Transformation en numerique 
+Selection individu 
 
 ```{r}
-
-# Identifier les colonnes commençant par 'X'
-#colonnes_X <- grep("^X", names(data), value = TRUE)
-
-# Convertir ces colonnes en numériques
-#data[colonnes_X] <- lapply(data[colonnes_X], as.)
-
-# Afficher les premières lignes du dataframe pour vérifier
-
-#summary(data)
-#head(data)
-
-```
-
-Pivot longer des données 
-
-```{r}
-library(tidyr)
-library(readr)
-# Vérification de la classe de 'data'
-print(class(data))
-
-# Identification des colonnes à pivoter
-years_cols <- names(data)[grepl("^X[0-9]{4}$", names(data))]
-
-# Transformation des données
-data_long <- pivot_longer(data, 
-                          cols = all_of(years_cols), 
-                          names_to = "Année", 
-                          values_to = "Dette")
-
-# Remplacement du préfixe "X" dans les années
-data_long$Année <- gsub("X", "", data_long$Année)
-
-# Affichage des premières lignes du résultat
-View(data_long)
-```
-
-Selection des 25 pays 
-
-```{r}
+# Assurez-vous que votre dataframe s'appelle 'df'
 selected_countries <- c("South Korea", "Suriname", "Belgium", "Guinea", "Comoros", 
                         "Qatar", "New Zealand", "Paraguay", "Madagascar", "Gabon", 
                         "Austria", "Greece", "Algeria", "Morocco", "France", 
@@ -65,20 +25,68 @@ selected_countries <- c("South Korea", "Suriname", "Belgium", "Guinea", "Comoros
                         "United Kingdom", "Seychelles", "Honduras", "Netherlands", 
                         "Spain")
 
-print(selected_countries)
+# Création d'un nouveau dataframe avec uniquement les pays sélectionnés
+data <- data[data$Country.Name %in% selected_countries, ]
 
-# Supposons que votre dataframe s'appelle 'df'
-df <- data_long[data_long$Country.Name %in% selected_countries, ]
-
-# Afficher les premières lignes du dataframe filtré
-head(df)
-
-
+# Affichage des premières lignes du nouveau dataframe
+head(data)
 
 ```
+
+
+Transformation en numerique et suppression colonne inutile 
 
 ```{r}
-df_1 <- df[,-c(1, 3)]
-head(df_1)
+# Suppression des colonnes 'Region' et 'Image.URL' sans utiliser dplyr
+data <- data[, !(names(data) %in% c("region", "Image.URL"))]
+
+
+for (colname in names(data)) {
+  # Vérifie si le nom de la colonne commence par 'X' suivi de 4 chiffres
+  if (grepl("^X[0-9]{4}$", colname)) {
+    # Suppression des virgules et conversion en numérique
+    data[[colname]] <- as.numeric(gsub(",", ".", data[[colname]]))
+
+    # Renommage de la colonne pour enlever le 'X'
+    names(data)[names(data) == colname] <- substr(colname, 2, nchar(colname))
+  }
+}
+
+head(data)
+
+
 ```
+
+
+
+```{r}
+
+library(tidyr)
+
+
+long_data <- pivot_longer(data, cols = -Country.Name, names_to = "Année", values_to = "Dette")
+
+
+head(long_data)
+
+df <- pivot_wider(long_data, names_from = Country.Name, values_from = Dette)
+
+head(df)
+
+```
+
+# Selection des pays ayant une valeur de dette de 1990 à 2021 
+
+```{r}
+
+y = df[,5]
+y
+dim(y)
+annee = df$Année
+annee
+
+plot(annee,y)
+```
+
+
 
