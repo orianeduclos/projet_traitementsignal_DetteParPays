@@ -4,3 +4,81 @@ author: "Margaux Bailleul & Oriane Duclos"
 date: "2023-11-22"
 output: pdf_document
 ---
+
+```{r}
+data <- read.csv("archive/Dette_par_pays.csv")
+head(data)
+```
+
+```{r}
+summary(data)
+```
+
+Transformation en numerique 
+
+```{r}
+
+# Identifier les colonnes commençant par 'X'
+#colonnes_X <- grep("^X", names(data), value = TRUE)
+
+# Convertir ces colonnes en numériques
+#data[colonnes_X] <- lapply(data[colonnes_X], as.)
+
+# Afficher les premières lignes du dataframe pour vérifier
+
+#summary(data)
+#head(data)
+
+```
+
+Pivot longer des données 
+
+```{r}
+library(tidyr)
+library(readr)
+# Vérification de la classe de 'data'
+print(class(data))
+
+# Identification des colonnes à pivoter
+years_cols <- names(data)[grepl("^X[0-9]{4}$", names(data))]
+
+# Transformation des données
+data_long <- pivot_longer(data, 
+                          cols = all_of(years_cols), 
+                          names_to = "Année", 
+                          values_to = "Dette")
+
+# Remplacement du préfixe "X" dans les années
+data_long$Année <- gsub("X", "", data_long$Année)
+
+# Affichage des premières lignes du résultat
+View(data_long)
+```
+
+Selection des 25 pays 
+
+```{r}
+selected_countries <- c("South Korea", "Suriname", "Belgium", "Guinea", "Comoros", 
+                        "Qatar", "New Zealand", "Paraguay", "Madagascar", "Gabon", 
+                        "Austria", "Greece", "Algeria", "Morocco", "France", 
+                        "Syria", "Italy", "Singapore", "Lesotho", "Ghana", 
+                        "United Kingdom", "Seychelles", "Honduras", "Netherlands", 
+                        "Spain")
+
+print(selected_countries)
+
+# Supposons que votre dataframe s'appelle 'df'
+df <- data_long[data_long$Country.Name %in% selected_countries, ]
+
+# Afficher les premières lignes du dataframe filtré
+head(df)
+
+
+
+```
+
+```{r}
+df_1 <- df[,-c(1, 3)]
+head(df_1)
+```
+
