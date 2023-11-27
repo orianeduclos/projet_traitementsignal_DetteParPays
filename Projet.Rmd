@@ -20,8 +20,8 @@ Selection individu
 # Assurez-vous que votre dataframe s'appelle 'df'
 selected_countries <- c("South Korea", "Suriname", "Belgium", "Guinea", "Comoros", 
                         "Qatar", "New Zealand", "Paraguay", "Madagascar", "Gabon", 
-                        "Austria", "Greece", "Algeria", "Morocco", "France", 
-                        "Syria", "Italy", "Singapore", "Lesotho", "Ghana", 
+                        "Austria", "Portugal", "Algeria", "Morocco", "France", 
+                        "Libya", "Italy", "Singapore", "Lesotho", "Ghana", 
                         "United Kingdom", "Seychelles", "Honduras", "Netherlands", 
                         "Spain")
 
@@ -75,18 +75,36 @@ head(df)
 
 ```
 
+
 # Selection des pays ayant une valeur de dette de 1990 à 2021 
 
 ```{r}
-
-y = df[,5]
-y
-dim(y)
-annee = df$Année
-annee
-
-plot(annee,y)
+library(ggplot2)
+ggplot(data = df) + aes(x = df$Année, y = df$Portugal) + 
+  geom_point()
 ```
+
+```{r}
+library(ggplot2)
+library(tidyr)
+
+# Exemple de réorganisation des données avec gather
+df_long <- gather(df, key = "Pays", value = "Valeur", -Année)
+df_long <- df_long[order(df_long$Année), ]
+
+# Tracer le graphique avec ggplot
+ggplot(data = df_long, aes(x = Année, y = Valeur, color = Pays)) +
+  geom_point() +
+  labs(title = "Données par pays")
+```
+```{r}
+ggplot(data = df_long, aes(x = Année, y = Valeur, color = Pays)) +
+  geom_point() +
+  labs(title = "Données par pays")
+```
+
+
+
 
 
 
