@@ -1,0 +1,336 @@
+---
+title: "Analyse de données fonctionelles d'émissions de CO2"
+author: "Lola Beuchee - Elouan Girot"
+output:
+  pdf_document: default
+  html_document: default
+date: "2022-11-16"
+---
+
+
+<style>
+
+body {
+
+text-align: justify}
+
+</style>
+
+```{r,echo=FALSE,include=FALSE,message=FALSE,warning=FALSE}
+library(fda)
+library(dplyr)
+
+library(tidyverse)
+```
+
+# Introduction
+
+L'objectif de ce projet est de récupérer des données pouvant être transformées en objet fonctionnel, afin d'y effectuer différentes méthodes d'analyse telles qu'un lissage ou encore une ACP.
+
+Pour ce faire, nous avons décidé de nous intéresser à l'évolution des **émissions de CO2 (en tonnes/habitant)** au cours des 30 dernières années, le tout pour 22 pays différents. Pour le choix des pays, nous avons décidé de prendre des individus présents sur les différents continents et avec des niveaux de développement différents afin de voir si leurs caractéristiques pouvaient faire émerger des conclusions intéressantes.
+
+Le jeu de données a été récupéré à l'adresse suivante : https://data.worldbank.org/indicator/EN.ATM.CO2E.PC
+
+# Etape 1 : Présentation des données
+
+```{r,echo=FALSE,include=FALSE,message=FALSE,warning=FALSE}
+setwd("~/M2 MAS/Traitement du signal/Projet")
+don=read.csv("archive/emission_co2_2.csv",header = T,sep=";")
+don=don[ , colSums(is.na(don)) == 0]
+rownames(don)=1990:2019
+head(don)
+
+```
+
+
+### Visualisation des données
+
+Pour commencer, on se propose de visualiser la structure des données. Les pays figurent en colonnes (7 pays sont représentés ici) et les années en lignes.
+
+```{r}
+
+head(don,10)[,2:8]
+  
+```
+
+
+```{r}
+years <- 1990:2019
+ndf <- cbind(years,don)
+data_longer <-  ndf%>%pivot_longer(!years, names_to="pays", values_to="CO2")
+head(data_longer)
+```
+
+```{r}
+summary(don)
+```
+
+### Courbe évolutive/Boxplot
+
+On se propose ensuite de visualiser quelques statistiques descriptives afin d'observer rapidement les divers aspects du jeu de données.
+
+```{r}
+ggplot(data_longer, aes(x=years, y=CO2, color=pays)) + geom_line() +  
+  xlab("Années") +
+  ylab("Emissions de CO2 (En T/hab)") +
+  ggtitle("Figure 1:  Emissions/hab de CO2 pour chaque pays au cours du temps ")
+```
+
+
+```{r}
+ggplot(data = data_longer,aes(x =pays, y = CO2)) +
+  geom_boxplot() +
+  xlab("Pays") +
+  ylab("Distribution de la variable d'intérêt")+
+  coord_flip()+ 
+  ggtitle("Figure 2: Boxplot comparatifs")
+
+```
+
+
+La figure 1 nous montre l'évolution globale des émissions de CO2 au cours du temps pour chacun des pays de notre étude sur les 30 dernières années. Les boxplots de la figure 2 nous permettent de visualiser la distribution des émissions pour chaque pays et nous permet ainsi de voir les pays avec un taux d'émission plus élevé/plus variable.
+
+Ces deux graphiques nous permettent de constater que les trois pays qui emmettent le plus de CO2 (en tonne/habitant) sont les **Emirats Arabes Unis**, les **Etats-Unis** et l'**Australie**. En comparant ce graphique avec les résultats du résumé statistique, nous pouvons également constater que les **Emirats-Arabes-Unis** et le **Danemark** observent une baisse continue de leurs emissions de CO2. Au contraire la **Chine** voit ses émissions augmenter fortement depuis le début des années 2000. Quant à l'**Estonie et la Finlande**, leurs emissions sont particulièrement oscillantes autour d'une moyenne relativement constante. Les autres pays semblent quant à eux avoir des variations et des tendances relativement constantes. Les boxplots nous permettent également de voir que l'**Estonie** présente certaines valeurs d'émissions de CO2 aberrantes.
+
+# Etape 2 : Lissage des séries
+
+On peut tout d'abord vérifier que le jeu de données ne contient pas ou peu de données manquantes.
+
+```{r}
+sum(is.na(don))
+```
+
+Il est nécéssaire de modifier le format des données pour la suite de l'étude.
+
+```{r}
+y=data.matrix(don)
+```
+
+
+### Création de la base de splines
+
+On choisit d'utiliser une base de splines cubiques (ordre 4) avec autant de noeuds qu'il y a de points de données.
+
+- Le choix d'utiliser une base de splines peut s'expliquer par le fait que les bases de Fourier sont davantage adaptées pour approcher des fonctions périodiques (ce qui n'est pas notre cas). Les bases d'ondelettes servent plus particulièrement aux signaux présentant des discontinuité et des irrégularité. De plus, elles possèdent quelques contraintes tels que la nécéssité d'avoir un nombre de points de données égal à une puissance de 2.
+
+  En revanche, les bases de splines sont adaptées à l’étude des signaux réguliers et non-périodiques, ont des bonnes propriétés d’approximation etc.. Enfin, les bases de splines ne nécéssitent pas de connaissance à priori sur le nombre de noeuds à choisir car elles disposent de méthodes faciles à mettre en place pour régulariser ce critère (voir suite).
+
+
+- Le choix de l'ordre 4 s'explique par le fait que les bases d'ordre 2 conduisent à une reconstruction non lisse (non dérivable aux points de rupture) et que les bases d'ordre 3 ne semblent pas assez flexibles (difficulté à bien approcher certains points). A partir de l'ordre 4, on sait que les reconstructions sont satisfaisantes.
+
+- Enfin, pour le choix du nombre de noeuds, on sait que trop peu de noeuds donnent une approximation biaisée (pas assez proche des données observées) tandis que trop de noeuds donnent une reconstruction "ondulante", trop flexible. On choisit donc un nombre de noeuds égal au nombre de points de données puis on pénalisera le critère des moindres carrés par un critère de rugosité pour garder un lissage pas trop oscillant.
+
+```{r}
+xrange = range(as.numeric(rownames(y)))
+
+splbasis = create.bspline.basis(xrange,norder=4,breaks=as.numeric(rownames(y)))
+```
+
+
+### Calibration de la pénalité par validation croisée **Leave One Out**
+
+Le compromis entre ajustement et rugosité se fait en ajustant la valeur d'un paramètre lambda que l'on calibre par validation croisée LOO.
+
+On prend une grille de valeurs de lambda exponentielle pour balayer un large éventail de valeurs afin de ne pas manquer l'optimum.
+
+```{r}
+gcv = 1:21
+for (i in 1:21){
+  lambda = exp(i-10)
+  fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
+  smoothdata = smooth.basis(xrange[1]:xrange[2],y,fdParobj = fdparTemp)
+  gcv[i] = mean(smoothdata$gcv)
+}
+plot(gcv,xlab="Lambda",ylab="Erreur LOO")
+abline(v=which.min(gcv),col="red")
+```
+
+
+
+```{r}
+lambda = exp(which.min(gcv)-10)
+fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
+smoothdata = smooth.basis(xrange[1]:xrange[2],y,fdParobj = fdparTemp)
+```
+
+### Représentation des données lissées
+
+```{r}
+fhatsmooth = eval.fd(xrange[1]:xrange[2],smoothdata$fd)
+par(mfrow=c(1,2))
+matplot(xrange[1]:xrange[2],y,type="l",lty=1,xlab="Temps",ylab="Emissions CO2",main="Données brutes")
+matplot(xrange[1]:xrange[2],fhatsmooth,type="l",lty=1,xlab="Temps",ylab="Emissions CO2",main="Données lissées")
+```
+
+Les résultats obtenus semblent relativement satisfaisants. On récupère des données fonctionnelles, évaluables en tout point de temps et qui s'adaptent globalement bien aux tendances globales des évolutions des émissions de CO2 de chaque pays sans pour autant être trop oscillantes.
+
+# Etape 3 : Statistiques exploratoires
+
+## Moyenne fonctionnelle
+ 
+On peut représenter l'évolution "moyenne" des emissions de co2 en traçant la moyenne empirique fonctionnelle.
+
+```{r}
+meantemp = mean.fd(smoothdata$fd) #moyenne (objet fonctionnel fd)
+```
+
+
+```{r}
+matplot(fhatsmooth,col="gray",type="l",xlab="Année",ylab="Emission de CO2")
+lines(meantemp$coefs,lwd=2)
+```
+
+On remarque que l'évolution moyenne reprend en partie la tendance à la baisse des émissions de CO2 des pays sur les 30 dernières années.
+
+## Ecart-type fonctionnel
+
+On peut faire de même pour l'écart-type moyen et le mettre en relation avec l'espérance moyenne.
+ 
+```{r}
+sdtemp = sd.fd(smoothdata$fd) #ecart-type (objet fonctionnel fd)
+```
+
+
+```{r}
+matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
+fnmoy = eval.fd(xrange[1]:xrange[2],meantemp)
+fnsd  = eval.fd(xrange[1]:xrange[2],sdtemp)
+lines(fnmoy,lwd=2)
+lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
+lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
+``` 
+
+Grâce à ce graphique, on remarque que la quasi intégralité des pays est située entre $\bar{X} + 2 \sigma$ et $\bar{X} - 2 \sigma$ (non visible sur le graphique). On remarque ainsi que seuls les Emirats-Arabes-Unis "sortent du lot" et sont toujours au-dessus de $\bar{X} + 2 \sigma$. Ce résultat n'est pas vraiment surprenant dans la mesure où ce pays fait partie des pays les plus polluants au monde et avec un nombre d'habitants plutôt faible.
+
+On observe également une hétérogénéité légèrement plus importante entre les individus dans les années 90 que de nos jours. On peut penser que cela s'explique par le fait que la situation des pays était très hétérogènes dans les années 1990, avec des pays beaucoup plus polluants que d'autres alors que les comportements actuels tendent tous à la baisse vers des seuils fixés par des accords internationaux tels que la cop 21.
+
+## Covariance/Corrélation fonctionelle
+
+### Covariance fonctionelle
+
+```{r}
+covtemp = var.fd(smoothdata$fd)
+surfcov = eval.bifd(xrange[1]:xrange[2],xrange[1]:xrange[2],covtemp)
+```
+
+
+```{r,echo=FALSE,include=FALSE,message=FALSE,warning=FALSE}
+nofColors <- 100
+colorFunc <- colorRampPalette(c('blue', 'red'));
+colors_   <- colorFunc(nofColors)
+z=surfcov
+z.centerValues <- (
+   z[      -1  ,      -1  ] +
+   z[      -1  , -ncol(z) ] +
+   z[ -nrow(z) ,      -1  ] +
+   z[ -nrow(z) , -ncol(z) ]
+) / 4
+
+z.colorBin <- cut(z.centerValues, nofColors);
+
+```
+
+
+
+```{r}
+
+persp(surfcov,theta=30,xlab="Années",ylab="Années",zlab="covariance",col=  colors_[z.colorBin],)
+
+```
+
+```{r}
+filled.contour(surfcov)
+```
+Ces deux graphiques ne nous montrent rien de particulier, ce n'est pas forcément étonnant dans la mesure où il n'y a pas forcément de causalité entre les émissions de CO2 des individus entre une année et une autre.
+
+### Corrélation fonctionelle
+
+
+```{r}
+cortemp = cor.fd(xrange[1]:xrange[2],smoothdata$fd)
+#renvoie directement la matrice de corrélation emprique évaluée en les points demandés
+```
+
+
+```{r}
+persp(cortemp,theta=90,phi=40,xlab="Années",ylab="Années",zlab="corrélation",col=  colors_[z.colorBin],)
+```
+
+```{r}
+filled.contour(cortemp)
+```
+
+Les 4 graphiques précédents mettent en évidence l'absence de corrélation entre les différentes plages de temps de notre jeu de données. Ces résultats sont plutôt logiques étant donnée l'absence de "cycle" dans nos données, contrairement aux données de températures par exemple où l'on retrouvait des températures proches entre le début et la fin d'une année.
+
+## ACP fonctionnelle
+
+```{r}
+TempACPF = pca.fd(smoothdata$fd,nharm=4,centerfns = TRUE)
+TempACPF$varprop
+cumsum(TempACPF$varprop)
+```
+
+On remarque que la première composante (97.3%) et la deuxieme composante (1.7%) représentent plus de 99% de la variabilité expliquée.
+
+On peut commencer par représenter les composantes principales obtenues.
+ 
+```{r}
+plot(TempACPF$harmonics)
+```
+
+On constate que la courbe noire prend des valeurs positives comme ce qui est attendu en général pour cette courbe. Elle semble bien prendre la variabilité de nos individus (pays) et leurs caractéristiques communes : Une tendance à la baisse
+
+En ce qui concerne la courbe rouge, elle est dans un premier temps négative puis positive. Elle reflète bien le changement de régime/ de comportements selon les individus.
+
+Pour faciliter l'interprétation on peut représenter la moyenne diminuée ou augmentée des premières fonctions propres.
+
+On peut utiliser la fonction `plot.pca.fd` pour cette représentation.
+
+```{r}
+par(mfrow=c(2,2))
+plot.pca.fd(TempACPF)
+```
+
+Ici, on voit que la moyenne diminuée ou augmentée de la première fonction propre permet de retracer presque parfaitement l'allure générale de notre jeu de données. Ce n'est pas étonnant étant donné que la première composante explique plus de 97% de la variabilité de notre jeu de données. Ainsi, sans surprise, la moyenne augmentée ou diminuée des fonctions propres 2,3 ou 4 n'offre aucune plus-value utile pour l'interprétation.
+
+### Représentation des individus dans le premier plan factoriel
+
+On peut terminer par représenter nos individus (les pays) sur le premier plan factoriel. Afin de proposer une interprétation plus poussée, nous avons également récupéré une information liée à la présence ou non de chaque pays en tant que membre de l'OCDE (Indicateur reflétant le développement d'un pays) afin de voir si ces groupes de pays avaient des caractéristiques différentes.
+
+```{r}
+colnames(don)[1]="United Arab Emirates"
+colnames(don)[9]="United Kingdom"
+colnames(don)[13]="United States"
+
+OCDE=read.csv("OCDE.csv",sep=";",header=T)
+pays=data.frame(Pays=colnames(don))
+
+info_pays=left_join(pays,OCDE,by="Pays")
+info_pays[is.na(info_pays)] <- 0
+```
+
+
+```{r}
+plot(TempACPF$scores[,1],TempACPF$scores[,2],pch=20,xlab="Axe 1", ylab="Axe 2",type="n")
+pays= colnames(don)
+IDH = as.factor(info_pays$Membre.de.l.OCDE)
+text(TempACPF$scores[,1],TempACPF$scores[,2],labels=pays,cex=0.7,col=as.numeric(IDH))
+legend("topleft",legend = levels(IDH),col=1:4,lty=1)
+
+```
+
+En comparant ce graphique au premier graphique réalisé dans cette étude (les courbes évolutives), on remarque que le premier axe factoriel semble discriminer les pays selon qu'ils aient un fort taux d'emmission de CO2/habitant ou non : on retrouve bien les Emirats-Arabes-Unis (pays avec le taux le plus élevé) sur la droite de l'axe et des pays comme le cambodge à gauche de l'axe. On remarque également que les pays à gauche (avec un faible taux) sont principalement les pays sous-développés alors que les pays développés ont tendance à être plus à droite. On note que la Chine est classée parmi les pays avec de faibles emissions car celles-ci sont mesurées par habitant et il s'agit du pays le plus peuplé du monde.
+
+Concernant l'axe 2, il semble lui différencier les pays selon leur tendance à la hausse ou à la baisse de leurs emissions de CO2. On trouve en effet que les Emirats-Arabe-Unis et le Danemark sont les pays les plus bas sur cet axe, contrairement à la Chine qui se situe tout en haut. Cette observation est cohérente avec notre premier graphique sur lequel on voit bien que les Emirats-Arabe-Unis et le Danemark ont eu la plus forte baisse et la Chine la plus forte hausse. Enfin, le reste des pays et notammennt les pays sous-développés sont plutôt regroupés sur cet axe et correspondent à des pays pour lesquels les emissions de CO2 sont restées plutôt constantes sur ces 30 dernières années.
+
+# Conclusion
+
+Pour conclure, on peut dire que nos données, au départ temporelles, ont pu être approchées de manière globalement satisfaisantes en signal fonctionnel à l'aide d'une base de splines d'ordre 4 avec un nombre de noeuds choisi par pénalisation du critère des moindres carrés. Cette approximation nous permet de visualiser les grandes tendances de nos différentes courbes d'évolution des émissions de CO2.
+
+Suite à ce lissage, les diverses statistiques exploratoires ont permis de mettre en évidence:
+
+- La sur-représentation des Emirats-Arabes-Unis dans la hiérarchie mondiale, grâce à la variance.
+
+- Le caractère non cyclique et l'indépendance de notre métrique entre les différentes périodes de temps grâce aux tracés des surfaces de covariance et de corrélation.
+
+- L'influence de l'emplacement géographique et du développement d'un pays sur ses émissions/habitants brutes et sur sa variation dans le temps (hausse ou baisse des émissions) via la visualisation des individus dans le premier plan factoriel.

@@ -14,27 +14,6 @@ head(data)
 summary(data)
 ```
 
-Selection individu 
-
-```{r}
-# Assurez-vous que votre dataframe s'appelle 'df'
-selected_countries <- c("South Korea", "Suriname", "Belgium", "Guinea", "Comoros", 
-                        "Qatar", "New Zealand", "Paraguay", "Madagascar", "Gabon", 
-                        "Austria", "Portugal", "Algeria", "Morocco", "France", 
-                        "Libya", "Italy", "Singapore", "Lesotho", "Ghana", 
-                        "United Kingdom", "Seychelles", "Honduras", "Netherlands", 
-                        "Spain")
-
-# Création d'un nouveau dataframe avec uniquement les pays sélectionnés
-data <- data[data$Country.Name %in% selected_countries, ]
-
-# Affichage des premières lignes du nouveau dataframe
-head(data)
-
-```
-
-
-Transformation en numerique et suppression colonne inutile 
 
 ```{r}
 # Suppression des colonnes 'Region' et 'Image.URL' sans utiliser dplyr
@@ -53,10 +32,7 @@ for (colname in names(data)) {
 }
 
 head(data)
-
-
 ```
-
 
 
 ```{r}
@@ -67,41 +43,62 @@ library(tidyr)
 long_data <- pivot_longer(data, cols = -Country.Name, names_to = "Année", values_to = "Dette")
 
 
-head(long_data)
-
 df <- pivot_wider(long_data, names_from = Country.Name, values_from = Dette)
-
+df <- as.data.frame(df)
 head(df)
 
+# Mettre la colonne année en rownames
+rownames(df) <- df$Année
+head(df)
+
+# enlever la colonne année
+df <- df[, !(names(df) %in% c("Année"))]
+head(df)
+
+# enlever toutes les colonnes qui ont au moins un 0 dans la colonne
+df <- df[, colSums(df == 0) == 0]
+head(df)
+
+
 ```
 
-
-# Selection des pays ayant une valeur de dette de 1990 à 2021 
+# Trace de la dette de la France de 1990 à 2021
 
 ```{r}
-library(ggplot2)
-ggplot(data = df) + aes(x = df$Année, y = df$Portugal) + 
-  geom_point()
+
+plot(df$France, type = "l", col = "blue", xlab = "Année", ylab = "Dette", main = "Dette de la France")
+
+```
+
+# Reorganisation des données
+
+```{r}
+years <- 1990:2021
+ndf <- cbind(years,df)
+data_longer <-  ndf%>%pivot_longer(!years, names_to="pays", values_to="Dette")
+head(data_longer)
+```
+
+
+
+### Courbe évolutive/Boxplot
+
+```{r}
+ggplot(data_longer, aes(x=years, y=Dette, color=pays)) + geom_line() +  
+  xlab("Années") +
+  ylab("Dette") +
+  ggtitle("Figure 1:  Dette  pour chaque pays au cours du temps ")
 ```
 
 ```{r}
-library(ggplot2)
-library(tidyr)
-
-# Exemple de réorganisation des données avec gather
-df_long <- gather(df, key = "Pays", value = "Valeur", -Année)
-df_long <- df_long[order(df_long$Année), ]
-
-# Tracer le graphique avec ggplot
-ggplot(data = df_long, aes(x = Année, y = Valeur, color = Pays)) +
-  geom_point() +
-  labs(title = "Données par pays")
+ggplot(data = data_longer,aes(x =pays, y = Dette)) +
+  geom_boxplot() +
+  xlab("Pays") +
+  ylab("Distribution de la variable d'intérêt")+
+  coord_flip()+ 
+  ggtitle("Figure 2: Boxplot comparatifs")
 ```
-```{r}
-ggplot(data = df_long, aes(x = Année, y = Valeur, color = Pays)) +
-  geom_point() +
-  labs(title = "Données par pays")
-```
+
 
 
 
