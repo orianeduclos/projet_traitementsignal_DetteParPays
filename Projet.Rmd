@@ -66,6 +66,7 @@ head(df)
 
 ```{r}
 
+
 plot(df$France, type = "l", col = "blue", xlab = "Année", ylab = "Dette", main = "Dette de la France")
 
 ```
