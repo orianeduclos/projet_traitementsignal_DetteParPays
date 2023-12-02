@@ -114,19 +114,56 @@ n <- ncol(df)
 ```{r}
 y=data.matrix(df)
 #y
+xrange = range(as.numeric(rownames(y)))
+```
 
+
+```{r}
+splbasis = create.bspline.basis(xrange,norder=6,breaks=years)
+gcv = 1:40
+for (i in 1:40){
+  lambda = exp(i-10)
+  fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
+  smoothdata = smooth.basis(years,y,fdParobj = fdparTemp)
+  gcv[i] = mean(smoothdata$gcv) #n valeur de critere general pour un lambda donnée soit la moyenne 
+}
+plot(gcv)
+which.min(gcv)
+```
+
+```{r}
+lambda = exp(which.min(gcv)-10)
+lambda
+fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=1)
+smoothdata = smooth.basis(years,y,fdParobj = fdparTemp)
+```
+
+```{r}
+fhatsmooth = eval.fd(years,smoothdata$fd)
+par(mfrow=c(1,2))
+matplot(years,y,type="l",lty=1,ylab="",main="donnees brutes")
+matplot(years,fhatsmooth,type="l",lty=1,ylab="",main="donnees lissees")
+```
+
+```{r}
+matplot(years,fhatsmooth-y,lty=1,type="l",ylab="residus")
 ```
 
 
 ```{r}
 xrange = range(as.numeric(rownames(y)))
+xrange
 
 splbasis = create.bspline.basis(xrange,norder=4,breaks=as.numeric(rownames(y)))
+plot(splbasis)
 ```
 
 ```{r}
-gcv = 1:21
-for (i in 1:21){
+```
+
+```{r}
+gcv = 1:40
+for (i in 1:40){
   lambda = exp(i-10)
   fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
   smoothdata = smooth.basis(xrange[1]:xrange[2],y,fdParobj = fdparTemp)
@@ -134,6 +171,7 @@ for (i in 1:21){
 }
 plot(gcv,xlab="Lambda",ylab="Erreur LOO")
 abline(v=which.min(gcv),col="red")
+
 ```
 ```{r}
 lambda = exp(which.min(gcv)-10)
