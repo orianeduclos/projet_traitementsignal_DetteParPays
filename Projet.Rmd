@@ -85,6 +85,7 @@ head(data_longer)
 ### Courbe évolutive/Boxplot
 
 ```{r}
+library(ggplot2)
 ggplot(data_longer, aes(x=years, y=Dette, color=pays)) + geom_line() +  
   xlab("Années") +
   ylab("Dette") +
@@ -100,9 +101,47 @@ ggplot(data = data_longer,aes(x =pays, y = Dette)) +
   ggtitle("Figure 2: Boxplot comparatifs")
 ```
 
+# Lissage des courbes 
+
+```{r}
+# nombre d'individue 
+n = length(unique(data_longer$pays))
+
+```
+
+```{r}
+xrange = range(data_longer$years); yrange = range(data_longer$Dette)
+plot(seq(xrange[1],xrange[2],length=50),seq(yrange[1],yrange[2],length=50),type="n",xlim=xrange,ylim=yrange,xlab="Pays",ylab="Dette")
+for (i in 1:n){
+datap = data_longer[which(data_longer$pays==i),]
+lines(datap$years,datap$Dette,col=i)
+}
+```
 
 
 
+Entre 1990 et 2021, la situation de la dette des pays dans le monde a connu plusieurs développements majeurs :
 
+    Années 1990 - Crises de la Dette et Restructurations :
+        Crises en Amérique Latine et en Asie : Dans les années 1990, plusieurs pays d'Amérique Latine, puis des pays asiatiques (comme la Corée du Sud, l'Indonésie, et la Thaïlande), ont connu de graves crises financières. Ces crises ont été souvent liées à une dette extérieure excessive et à des flux de capitaux spéculatifs.
+        Restructuration de la Dette : Ces crises ont entraîné des programmes de restructuration de la dette avec le soutien du Fonds Monétaire International (FMI) et de la Banque Mondiale, parfois accompagnés de politiques d'austérité.
+
+    Début des Années 2000 - Stabilité et Croissance :
+        Après les crises des années 1990, de nombreux pays ont connu une période de stabilité et de croissance économique. Cela a permis à certains pays de réduire leur ratio de dette par rapport au PIB.
+        Allègement de la Dette pour les Pays Pauvres : Des initiatives comme l'Initiative en faveur des pays pauvres très endettés (PPTE) ont été mises en place pour alléger la dette des nations les plus pauvres.
+
+    Crise Financière de 2008 :
+        Augmentation de la Dette en Occident : La crise financière de 2008 a entraîné un accroissement considérable de la dette publique dans de nombreux pays développés, en raison des plans de sauvetage des banques et des mesures de relance économique.
+        Effets à Long Terme : Les effets de cette crise se sont ressentis pendant plusieurs années, avec des politiques d'austérité mises en place dans certains pays, notamment en Europe.
+
+    Années 2010 - Divergence entre les Pays Développés et en Développement :
+        Les pays développés ont continué à gérer les conséquences de la crise financière, avec des politiques monétaires assouplies menant à des taux d'intérêt bas, facilitant ainsi le service de la dette.
+        Dans le même temps, plusieurs pays en développement ont accru leur endettement, profitant des conditions favorables sur les marchés financiers.
+
+    Pandémie de COVID-19 (2020-2021) :
+        Nouvelle Augmentation de la Dette : La pandémie a entraîné une augmentation massive de la dette publique mondiale, les gouvernements finançant des plans de soutien massifs pour leurs économies et leurs systèmes de santé.
+        Défis à Long Terme : La pandémie a mis en lumière les défis liés à la dette pour de nombreux pays, avec des préoccupations croissantes concernant la soutenabilité de la dette à long terme.
+
+En résumé, la période de 1990 à 2021 a été marquée par des cycles de crise et de reprise, avec des moments de tension financière suivis de périodes de stabilisation. La tendance générale a été une augmentation de la dette, en particulier suite à des événements majeurs comme la crise financière de 2008 et la pandémie de COVID-19.
 
 
