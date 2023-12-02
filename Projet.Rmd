@@ -134,7 +134,7 @@ which.min(gcv)
 ```{r}
 lambda = exp(which.min(gcv)-10)
 lambda
-fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=1)
+fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
 smoothdata = smooth.basis(years,y,fdParobj = fdparTemp)
 ```
 
@@ -149,43 +149,23 @@ matplot(years,fhatsmooth,type="l",lty=1,ylab="",main="donnees lissees")
 matplot(years,fhatsmooth-y,lty=1,type="l",ylab="residus")
 ```
 
+# Etape 3 
+
+## Moyenne fonctionnelle
+ 
+On peut représenter l'évolution "moyenne" des emissions de co2 en traçant la moyenne empirique fonctionnelle.
 
 ```{r}
-xrange = range(as.numeric(rownames(y)))
-xrange
-
-splbasis = create.bspline.basis(xrange,norder=4,breaks=as.numeric(rownames(y)))
-plot(splbasis)
-```
-
-```{r}
-```
-
-```{r}
-gcv = 1:40
-for (i in 1:40){
-  lambda = exp(i-10)
-  fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
-  smoothdata = smooth.basis(xrange[1]:xrange[2],y,fdParobj = fdparTemp)
-  gcv[i] = mean(smoothdata$gcv)
-}
-plot(gcv,xlab="Lambda",ylab="Erreur LOO")
-abline(v=which.min(gcv),col="red")
-
-```
-```{r}
-lambda = exp(which.min(gcv)-10)
-fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
-smoothdata = smooth.basis(xrange[1]:xrange[2],y,fdParobj = fdparTemp)
+meantemp = mean.fd(smoothdata$fd) #moyenne (objet fonctionnel fd)
 ```
 
 
 ```{r}
-fhatsmooth = eval.fd(xrange[1]:xrange[2],smoothdata$fd)
-par(mfrow=c(1,2))
-matplot(xrange[1]:xrange[2],y,type="l",lty=1,xlab="Temps",ylab="Emissions CO2",main="Données brutes")
-matplot(xrange[1]:xrange[2],fhatsmooth,type="l",lty=1,xlab="Temps",ylab="Emissions CO2",main="Données lissées")
+matplot(fhatsmooth,col="gray",type="l",xlab="Année",ylab="Dette")
+lines(meantemp$coefs,lwd=2)
 ```
+
+On remarque que l'évolution moyenne reprend en partie la tendance à la baisse des émissions de CO2 des pays sur les 30 dernières années.
 
 Entre 1990 et 2021, la situation de la dette des pays dans le monde a connu plusieurs développements majeurs :
 
