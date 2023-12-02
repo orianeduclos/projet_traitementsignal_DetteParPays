@@ -45,15 +45,15 @@ long_data <- pivot_longer(data, cols = -Country.Name, names_to = "Année", value
 
 df <- pivot_wider(long_data, names_from = Country.Name, values_from = Dette)
 df <- as.data.frame(df)
-head(df)
+#head(df)
 
 # Mettre la colonne année en rownames
 rownames(df) <- df$Année
-head(df)
+#head(df)
 
 # enlever la colonne année
 df <- df[, !(names(df) %in% c("Année"))]
-head(df)
+#head(df)
 
 # enlever toutes les colonnes qui ont au moins un 0 dans la colonne
 df <- df[, colSums(df == 0) == 0]
@@ -104,21 +104,50 @@ ggplot(data = data_longer,aes(x =pays, y = Dette)) +
 # Lissage des courbes 
 
 ```{r}
-# nombre d'individue 
-n = length(unique(data_longer$pays))
+# nombre d'individue de df
+n <- ncol(df)
 
+
+```
+
+
+```{r}
+y=data.matrix(df)
+#y
+
+```
+
+
+```{r}
+xrange = range(as.numeric(rownames(y)))
+
+splbasis = create.bspline.basis(xrange,norder=4,breaks=as.numeric(rownames(y)))
 ```
 
 ```{r}
-xrange = range(data_longer$years); yrange = range(data_longer$Dette)
-plot(seq(xrange[1],xrange[2],length=50),seq(yrange[1],yrange[2],length=50),type="n",xlim=xrange,ylim=yrange,xlab="Pays",ylab="Dette")
-for (i in 1:n){
-datap = data_longer[which(data_longer$pays==i),]
-lines(datap$years,datap$Dette,col=i)
+gcv = 1:21
+for (i in 1:21){
+  lambda = exp(i-10)
+  fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
+  smoothdata = smooth.basis(xrange[1]:xrange[2],y,fdParobj = fdparTemp)
+  gcv[i] = mean(smoothdata$gcv)
 }
+plot(gcv,xlab="Lambda",ylab="Erreur LOO")
+abline(v=which.min(gcv),col="red")
+```
+```{r}
+lambda = exp(which.min(gcv)-10)
+fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
+smoothdata = smooth.basis(xrange[1]:xrange[2],y,fdParobj = fdparTemp)
 ```
 
 
+```{r}
+fhatsmooth = eval.fd(xrange[1]:xrange[2],smoothdata$fd)
+par(mfrow=c(1,2))
+matplot(xrange[1]:xrange[2],y,type="l",lty=1,xlab="Temps",ylab="Emissions CO2",main="Données brutes")
+matplot(xrange[1]:xrange[2],fhatsmooth,type="l",lty=1,xlab="Temps",ylab="Emissions CO2",main="Données lissées")
+```
 
 Entre 1990 et 2021, la situation de la dette des pays dans le monde a connu plusieurs développements majeurs :
 
