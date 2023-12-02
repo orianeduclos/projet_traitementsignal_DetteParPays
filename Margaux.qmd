@@ -4,23 +4,153 @@ format: html
 editor: visual
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
 ```{r}
-1 + 1
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(fda)
+library(tidyfun)
+library(viridis)
+library(tidyverse)
+library(RColorBrewer)
 ```
 
-You can add options to executable code like this
-
 ```{r}
-#| echo: false
-2 * 2
+data <- read.csv("archive/Dette_parpays.csv", header = TRUE)
+head(data)
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+```{r}
+summary(data)
+```
+
+```{r}
+# Suppression des colonnes 'Region' et 'Image.URL' sans utiliser dplyr
+data <- data[, !(names(data) %in% c("region", "Image.URL"))]
+
+
+for (colname in names(data)) {
+  # Vérifie si le nom de la colonne commence par 'X' suivi de 4 chiffres
+  if (grepl("^X[0-9]{4}$", colname)) {
+    # Suppression des virgules et conversion en numérique
+    data[[colname]] <- as.numeric(gsub(",", ".", data[[colname]]))
+
+    # Renommage de la colonne pour enlever le 'X'
+    names(data)[names(data) == colname] <- substr(colname, 2, nchar(colname))
+  }
+}
+
+head(data)
+```
+
+```{r}
+
+library(tidyr)
+
+long_data <- pivot_longer(data, cols = -Country.Name, names_to = "Année", values_to = "Dette")
+
+df <- pivot_wider(long_data, names_from = Country.Name, values_from = Dette)
+df <- as.data.frame(df)
+head(df)
+
+# Mettre la colonne année en rownames
+rownames(df) <- df$Année
+head(df)
+
+# enlever la colonne année
+df <- df[, !(names(df) %in% c("Année"))]
+head(df)
+
+# enlever toutes les colonnes qui ont au moins un 0 dans la colonne
+df <- df[, colSums(df == 0) == 0]
+head(df)
+
+
+```
+
+# Trace de la dette de la France de 1990 à 2021
+
+```{r}
+plot(df$France, type = "l", col = "blue", xlab = "Année", ylab = "Dette", main = "Dette de la France")
+```
+
+# Reorganisation des données
+
+```{r}
+years <- 1990:2021
+ndf <- cbind(years,df)
+data_longer <-  ndf%>%pivot_longer(!years, names_to="pays", values_to="Dette")
+head(data_longer)
+```
+
+### Courbe évolutive/Boxplot
+
+```{r}
+ggplot(data_longer, aes(x=years, y=Dette, color=pays)) + geom_line() +  
+  xlab("Années") +
+  ylab("Dette") +
+  ggtitle("Figure 1:  Dette  pour chaque pays au cours du temps ")
+```
+
+```{r}
+ggplot(data = data_longer,aes(x =pays, y = Dette)) +
+  geom_boxplot() +
+  xlab("Pays") +
+  ylab("Distribution de la variable d'intérêt")+
+  coord_flip()+ 
+  ggtitle("Figure 2: Boxplot comparatifs")
+```
+
+### Création de la base de Spline
+
+```{r}
+mat = data.matrix(data_longer)
+```
+
+```{r}
+# FAIRE AVEC XRANGE POUR SEQ 
+noeuds = c(seq(1990, 2021, 1)) 
+xrange = c(1990, 2021)
+```
+
+```{r}
+bspbasis = create.bspline.basis(xrange,norder=4,breaks=noeuds)
+plot(bspbasis,lwd=1.5)
+```
+
+
+```{r}
+# LISSAGE SUR L'ENSEMBLE DES COURBES 
+gcv = 1:32
+for (i in 1:32){
+  lambda = exp(i-10)
+  fdparTemp = fdPar(bspbasis,Lfdobj = 2,lambda=lambda)
+  smoothdata = smooth.basis(data_longer$years,data_longer$Dette,fdParobj = fdparTemp)
+  gcv[i] = mean(smoothdata$gcv)
+}
+plot(gcv)
+which.min(gcv)
+```
+```{r}
+lambda = exp(which.min(gcv)-10)
+fdparTemp = fdPar(bspbasis,Lfdobj = 2,lambda=lambda)
+smoothdata = smooth.basis(data_longer$years,data_longer$Dette,fdParobj = fdparTemp)
+```
+
+```{r}
+fhatsmooth = eval.fd(data_longer$years,smoothdata$fd)
+par(mfrow=c(1,2))
+matplot(data_longer$years,data_longer$Dette,type="l",lty=1,ylab="",main="donnees brutes")
+matplot(data_longer$years,fhatsmooth,type="l",lty=1,ylab="",main="donnees lissees")
+```
+```{r}
+data_longer$years
+```
+
+
+
+
+
+
+
+
