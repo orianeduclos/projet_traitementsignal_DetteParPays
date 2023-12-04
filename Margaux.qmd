@@ -28,7 +28,6 @@ summary(data)
 # Suppression des colonnes 'Region' et 'Image.URL' sans utiliser dplyr
 data <- data[, !(names(data) %in% c("region", "Image.URL"))]
 
-
 for (colname in names(data)) {
   # Vérifie si le nom de la colonne commence par 'X' suivi de 4 chiffres
   if (grepl("^X[0-9]{4}$", colname)) {
@@ -82,6 +81,7 @@ ndf <- cbind(years,df)
 data_longer <-  ndf%>%pivot_longer(!years, names_to="pays", values_to="Dette")
 head(data_longer)
 ```
+# Statistiques descriptives 
 
 ### Courbe évolutive/Boxplot
 
@@ -101,7 +101,7 @@ ggplot(data = data_longer,aes(x =pays, y = Dette)) +
   ggtitle("Figure 2: Boxplot comparatifs")
 ```
 
-### Création de la base de Spline
+# Création de la base de Spline
 
 ```{r}
 mat = data.matrix(data_longer)
@@ -117,39 +117,104 @@ xrange = c(1990, 2021)
 bspbasis = create.bspline.basis(xrange,norder=4,breaks=noeuds)
 plot(bspbasis,lwd=1.5)
 ```
+```{r}
+for (colonne in names(df)) {
+  df[[colonne]] <- as.numeric(df[[colonne]])
+}
+y=data.matrix(df)
+```
 
 
 ```{r}
 # LISSAGE SUR L'ENSEMBLE DES COURBES 
-gcv = 1:32
-for (i in 1:32){
+splbasis = create.bspline.basis(c(1,32),norder=4,breaks=seq(1,32,1))
+gcv = 1:21
+for (i in 1:21){
   lambda = exp(i-10)
-  fdparTemp = fdPar(bspbasis,Lfdobj = 2,lambda=lambda)
-  smoothdata = smooth.basis(data_longer$years,data_longer$Dette,fdParobj = fdparTemp)
+  fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
+  smoothdata = smooth.basis(seq(1,32,1),y,fdParobj = fdparTemp)
   gcv[i] = mean(smoothdata$gcv)
 }
 plot(gcv)
 which.min(gcv)
 ```
-```{r}
-lambda = exp(which.min(gcv)-10)
-fdparTemp = fdPar(bspbasis,Lfdobj = 2,lambda=lambda)
-smoothdata = smooth.basis(data_longer$years,data_longer$Dette,fdParobj = fdparTemp)
-```
+# Analyses exploratoires
 
+## Ecart-type fonctionnel
+
+On peut faire de même pour l'écart-type moyen et le mettre en relation avec l'espérance moyenne.
+ 
 ```{r}
-fhatsmooth = eval.fd(data_longer$years,smoothdata$fd)
-par(mfrow=c(1,2))
-matplot(data_longer$years,data_longer$Dette,type="l",lty=1,ylab="",main="donnees brutes")
-matplot(data_longer$years,fhatsmooth,type="l",lty=1,ylab="",main="donnees lissees")
-```
-```{r}
-data_longer$years
+sdtemp = sd.fd(smoothdata$fd) #ecart-type (objet fonctionnel fd)
 ```
 
 
+```{r}
+matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
+fnmoy = eval.fd(xrange[1]:xrange[2],meantemp)
+fnsd  = eval.fd(xrange[1]:xrange[2],sdtemp)
+lines(fnmoy,lwd=2)
+lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
+lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
+``` 
 
 
+## ACP fonctionnelle
+
+```{r}
+TempACPF = pca.fd(smoothdata$fd,nharm=4,centerfns = TRUE)
+TempACPF$varprop
+cumsum(TempACPF$varprop)
+```
+
+On remarque que la première composante (97.3%) et la deuxieme composante (1.7%) représentent plus de 99% de la variabilité expliquée.
+
+On peut commencer par représenter les composantes principales obtenues.
+ 
+```{r}
+plot(TempACPF$harmonics)
+```
+
+On constate que la courbe noire prend des valeurs positives comme ce qui est attendu en général pour cette courbe. Elle semble bien prendre la variabilité de nos individus (pays) et leurs caractéristiques communes : Une tendance à la baisse
+
+En ce qui concerne la courbe rouge, elle est dans un premier temps négative puis positive. Elle reflète bien le changement de régime/ de comportements selon les individus.
+
+Pour faciliter l'interprétation on peut représenter la moyenne diminuée ou augmentée des premières fonctions propres.
+
+On peut utiliser la fonction `plot.pca.fd` pour cette représentation.
+
+```{r}
+par(mfrow=c(2,2))
+plot.pca.fd(TempACPF)
+```
+
+Ici, on voit que la moyenne diminuée ou augmentée de la première fonction propre permet de retracer presque parfaitement l'allure générale de notre jeu de données. Ce n'est pas étonnant étant donné que la première composante explique plus de 97% de la variabilité de notre jeu de données. Ainsi, sans surprise, la moyenne augmentée ou diminuée des fonctions propres 2,3 ou 4 n'offre aucune plus-value utile pour l'interprétation.
+
+### Représentation des individus dans le premier plan factoriel
+
+On peut terminer par représenter nos individus (les pays) sur le premier plan factoriel. Afin de proposer une interprétation plus poussée, nous avons également récupéré une information liée à la présence ou non de chaque pays en tant que membre de l'OCDE (Indicateur reflétant le développement d'un pays) afin de voir si ces groupes de pays avaient des caractéristiques différentes.
+
+```{r}
+colnames(don)[1]="United Arab Emirates"
+colnames(don)[9]="United Kingdom"
+colnames(don)[13]="United States"
+
+OCDE=read.csv("OCDE.csv",sep=";",header=T)
+pays=data.frame(Pays=colnames(don))
+
+info_pays=left_join(pays,OCDE,by="Pays")
+info_pays[is.na(info_pays)] <- 0
+```
+
+
+```{r}
+plot(TempACPF$scores[,1],TempACPF$scores[,2],pch=20,xlab="Axe 1", ylab="Axe 2",type="n")
+pays= colnames(don)
+IDH = as.factor(info_pays$Membre.de.l.OCDE)
+text(TempACPF$scores[,1],TempACPF$scores[,2],labels=pays,cex=0.7,col=as.numeric(IDH))
+legend("topleft",legend = levels(IDH),col=1:4,lty=1)
+
+```
 
 
 

@@ -245,7 +245,6 @@ Ces deux graphiques ne nous montrent rien de particulier, ce n'est pas forcémen
 
 ### Corrélation fonctionelle
 
-
 ```{r}
 cortemp = cor.fd(xrange[1]:xrange[2],smoothdata$fd)
 #renvoie directement la matrice de corrélation emprique évaluée en les points demandés

@@ -10,13 +10,9 @@ data <- read.csv("archive/Dette_parpays.csv", header = TRUE)
 head(data)
 ```
 
-```{r}
-summary(data)
-```
-
 
 ```{r}
-# Suppression des colonnes 'Region' et 'Image.URL' sans utiliser dplyr
+# Suppression des colonnes 'Region' et 'Image.URL'
 data <- data[, !(names(data) %in% c("region", "Image.URL"))]
 
 
@@ -25,7 +21,6 @@ for (colname in names(data)) {
   if (grepl("^X[0-9]{4}$", colname)) {
     # Suppression des virgules et conversion en numérique
     data[[colname]] <- as.numeric(gsub(",", ".", data[[colname]]))
-
     # Renommage de la colonne pour enlever le 'X'
     names(data)[names(data) == colname] <- substr(colname, 2, nchar(colname))
   }
@@ -36,36 +31,27 @@ head(data)
 
 
 ```{r}
-
 library(tidyr)
-
 
 long_data <- pivot_longer(data, cols = -Country.Name, names_to = "Année", values_to = "Dette")
 
-
 df <- pivot_wider(long_data, names_from = Country.Name, values_from = Dette)
 df <- as.data.frame(df)
-#head(df)
 
 # Mettre la colonne année en rownames
 rownames(df) <- df$Année
-#head(df)
 
 # enlever la colonne année
 df <- df[, !(names(df) %in% c("Année"))]
-#head(df)
 
 # enlever toutes les colonnes qui ont au moins un 0 dans la colonne
 df <- df[, colSums(df == 0) == 0]
 head(df)
-
-
 ```
 
 # Trace de la dette de la France de 1990 à 2021
 
 ```{r}
-
 
 plot(df$France, type = "l", col = "blue", xlab = "Année", ylab = "Dette", main = "Dette de la France")
 
