@@ -207,6 +207,23 @@ persp(cortemp,theta=90,phi=40,xlab="Années",ylab="Années",zlab="corrélation",
 filled.contour(cortemp)
 ```
 
+## Ecart-type fonctionnel
+
+On peut faire de même pour l'écart-type moyen et le mettre en relation avec l'espérance moyenne.
+ 
+```{r}
+sdtemp = sd.fd(smoothdata$fd) #ecart-type (objet fonctionnel fd)
+```
+
+
+```{r}
+matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
+fnmoy = eval.fd(xrange[1]:xrange[2],meantemp)
+fnsd  = eval.fd(xrange[1]:xrange[2],sdtemp)
+lines(fnmoy,lwd=2)
+lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
+lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
+``` 
 
 
 
