@@ -53,8 +53,22 @@ head(df)
 
 ```{r}
 
-plot(df$France, type = "l", col = "blue", xlab = "Année", ylab = "Dette", main = "Dette de la France")
+# Utiliser les rownames comme variable pour les années
+df$Annee <- as.numeric(rownames(df))
 
+# Filtrer le data frame pour ne conserver que les données de la France
+df_france <- df[, c("Annee", "France")]
+
+# Convertir le data frame en format long avec tidyr
+df_france_long <- gather(df_france, key = "Pays", value = "Dette", -Annee)
+
+# Créer le ggplot
+ggplot(df_france_long, aes(x = Annee, y = Dette)) +
+  geom_line() +
+  labs(title = "Dette de la France au fil du temps",
+       x = "Année",
+       y = "Dette") +
+  theme_minimal()
 ```
 
 # Reorganisation des données
