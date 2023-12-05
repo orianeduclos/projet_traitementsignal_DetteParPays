@@ -27,9 +27,9 @@ output:
 # Environnement de travail 
 
 ```{r}
-library(fda)
-library(dplyr)
-library(tidyverse)
+library(fda) 
+library(dplyr) 
+library(tidyverse) 
 ```
 
 # Introduction
@@ -44,8 +44,13 @@ Le jeu de données utilisé pour cette étude peut être retrouvé à l'adresse 
 # Prétaitement des données
 
 ```{r}
+#Importation des données
 data <- read.csv("archive/Dette_parpays.csv", header = TRUE)
 head(data)
+```
+
+```{r}
+data$region
 ```
 
 
@@ -89,7 +94,7 @@ head(df)
 
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 summary(df)
 ```
 
@@ -122,12 +127,12 @@ De 1990 à 2000, la dette augmente de manière relativement douce. Puis, la cour
 
 ## Courbe évolutive/Boxplot des pays retenus
 
-```{r}
+```{r include=FALSE}
 # Reorganisation du df pour faciliter la premiere visualisation
 years <- 1990:2021
 ndf <- cbind(years,df)
 data_longer <-  ndf%>%pivot_longer(!years, names_to="pays", values_to="Dette")
-head(data_longer)
+#head(data_longer)
 ```
 
 
@@ -166,7 +171,6 @@ Pour donner deux exemples :
 #  Transformation du df en matrice
 y=data.matrix(df)
 #y
-
 xrange = range(as.numeric(rownames(y))) # range des années
 ```
 
@@ -176,7 +180,7 @@ splbasis = create.bspline.basis(xrange,norder=6,breaks=years)
 gcv = 1:40
 for (i in 1:40){
   lambda = exp(i-10)
-  fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
+  fdparTemp = fdPar(splbasis,Lfdobj = 4,lambda=lambda)
   smoothdata = smooth.basis(years,y,fdParobj = fdparTemp)
   gcv[i] = mean(smoothdata$gcv) #n valeur de critere general pour un lambda donnée soit la moyenne 
 }
@@ -184,10 +188,11 @@ plot(gcv)
 which.min(gcv)
 ```
 
+On remarque que le pic le plus bas ce situe à environ 5. 
+
 ```{r}
 lambda = exp(which.min(gcv)-10) # choix du lambda qui minimise le critere general
-lambda
-fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda) 
+fdparTemp = fdPar(splbasis,Lfdobj = 4,lambda=lambda) 
 smoothdata = smooth.basis(years,y,fdParobj = fdparTemp) # # ajustement des données (obj fonctionnnelle qui contient l'ensemble des courbes lisées)
 ```
 
@@ -202,21 +207,30 @@ matplot(years,fhatsmooth,type="l",lty=1,ylab="",main="donnees lissees")  # chaqu
 matplot(years,fhatsmooth-y,lty=1,type="l",ylab="residus")
 ```
 
+En examinant le graphique, on peut observer les points suivants que la variabilité des résidus semble décroître au fil du temps, avec des pics plus élevés autour des années 1990 et une stabilisation vers 2020. Cela pourrait indiquer que la précision des modèles de lissage s'est améliorée ou que la volatilité de la dette des pays a diminué au fil du temps.De plus, il y a quelques pics et creux significatifs, notamment au début des années 1990 et autour de l'année 2000, ce qui peut indiquer des événements spécifiques qui ont affecté la dette de manière significative et qui n'ont pas été entièrement capturés par le modèle de lissage.
+Dans l'ensemble, il n'y a pas de tendance claire ou de biais visible dans les résidus, ce qui suggère que le modèle de lissage ne présente pas de problèmes systématiques majeurs.
+
+
 # Statistiques descriptives 
 
 ## Moyenne fonctionnelle
  
-On peut représenter l'évolution "moyenne" des emissions de co2 en traçant la moyenne empirique fonctionnelle.
+On peut représenter l'évolution "moyenne" des dettes en traçant la moyenne empirique fonctionnelle.
 
 ```{r}
 meantemp = mean.fd(smoothdata$fd) #moyenne (objet fonctionnel fd)
-meantemp # #obj fonctionnelle (coef dans la base de fonction que nous avons choisit(fonction moyenne ici))
+# meantemp # #obj fonctionnelle (coef dans la base de fonction que nous avons choisit(fonction moyenne ici))
 ```
+
 ```{r}
 matplot(fhatsmooth,col="gray",type="l",xlab="Année",ylab="Dette") # # courbes lissées
 lines(meantemp$coefs,lwd=2) # courbe moyenne
 ``` 
 
+
+La ligne noire épaisse représente la moyenne de ces courbes de dettes lissées. Elle montre la tendance générale de la dette à travers tous les pays considérés. La moyenne est relativement stable dans le temps. 
+
+ 
 ## Covariance/Corrélation fonctionelle
 
 ### Covariance fonctionelle
@@ -254,7 +268,8 @@ persp(surfcov,theta=30,xlab="Années",ylab="Années",zlab="covariance",col=  col
 ```{r}
 filled.contour(surfcov)
 ```
-Ces deux graphiques ne nous montrent rien de particulier, ce n'est pas forcément étonnant dans la mesure où il n'y a pas forcément de causalité entre les émissions de CO2 des individus entre une année et une autre.
+
+IMTERPRETATION
 
 ### Corrélation fonctionelle
 
@@ -290,6 +305,63 @@ lines(fnmoy,lwd=2)
 lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
 lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
 ``` 
+
+## ACP fonctionnelle
+
+```{r}
+TempACPF = pca.fd(smoothdata$fd,nharm=4,centerfns = TRUE)
+TempACPF$varprop
+cumsum(TempACPF$varprop)
+```
+
+On remarque que la première composante (97.3%) et la deuxieme composante (1.7%) représentent plus de 99% de la variabilité expliquée.
+
+On peut commencer par représenter les composantes principales obtenues.
+
+```{r}
+plot(TempACPF$harmonics)
+```
+
+On constate que la courbe noire prend des valeurs positives comme ce qui est attendu en général pour cette courbe. Elle semble bien prendre la variabilité de nos individus (pays) et leurs caractéristiques communes : Une tendance à la baisse
+
+En ce qui concerne la courbe rouge, elle est dans un premier temps négative puis positive. Elle reflète bien le changement de régime/ de comportements selon les individus.
+
+Pour faciliter l'interprétation on peut représenter la moyenne diminuée ou augmentée des premières fonctions propres.
+
+On peut utiliser la fonction `plot.pca.fd` pour cette représentation.
+
+```{r}
+par(mfrow=c(2,2))
+plot.pca.fd(TempACPF)
+```
+
+Ici, on voit que la moyenne diminuée ou augmentée de la première fonction propre permet de retracer presque parfaitement l'allure générale de notre jeu de données. Ce n'est pas étonnant étant donné que la première composante explique plus de 97% de la variabilité de notre jeu de données. Ainsi, sans surprise, la moyenne augmentée ou diminuée des fonctions propres 2,3 ou 4 n'offre aucune plus-value utile pour l'interprétation.
+
+### Représentation des individus dans le premier plan factoriel
+
+On peut terminer par représenter nos individus (les pays) sur le premier plan factoriel. Afin de proposer une interprétation plus poussée, nous avons également récupéré une information liée à la présence ou non de chaque pays en tant que membre de l'OCDE (Indicateur reflétant le développement d'un pays) afin de voir si ces groupes de pays avaient des caractéristiques différentes.
+
+```{r}
+plot.pca.fd(TempACPF)
+```
+
+```{r}
+# Installer ggplot2 si ce n'est pas déjà fait
+# install.packages("ggplot2")
+
+# Charger la bibliothèque ggplot2
+library(ggplot2)
+
+# Exemple de données fictives
+df <- data.frame(
+  France = c(100, 120, 150, 180, 200),
+  Germany = c(80, 90, 110, 130, 150),
+  UK = c(120, 130, 140, 160, 180)
+)
+
+
+
+```
 
 
 
