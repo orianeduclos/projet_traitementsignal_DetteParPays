@@ -153,6 +153,13 @@ ggplot(data = data_longer,aes(x =pays, y = Dette)) +
   ggtitle("Figure 2: Boxplot comparatifs")
 ```
 
+Ce graphique est un ensemble de boxplots comparatifs qui montrent la distribution de la dette des différents pays présents dans notre base de données.
+Pour donner deux exemples :
+
+1. Le boxplot pour la Suisse en haut montre que les valeurs sont plutôt regroupées autour de la médiane, qui est elle-même plutôt moyenne, et qu'il y a peu de variabilité et pas de valeurs extrêmes. Cela peut indiquer que la Suisse a eu une dette relativement stable entre 1990 et 2021.
+
+2. En comparaison, le boxplot pour le Japon montre une médiane très élevée, et de très longues moustaches, indiquant que les valeurs ont énormément varié entre 1990 et 2021 pour le Japon. Si nous mettons ce graphique en relation avec le précédent, nous remarquons qu’effectivement le Japon a une dette qui n’a cessé d’augmenter.
+
 # Lissage pénalisé des courbes 
 
 ```{r}
@@ -205,12 +212,10 @@ On peut représenter l'évolution "moyenne" des emissions de co2 en traçant la 
 meantemp = mean.fd(smoothdata$fd) #moyenne (objet fonctionnel fd)
 meantemp # #obj fonctionnelle (coef dans la base de fonction que nous avons choisit(fonction moyenne ici))
 ```
-
-
 ```{r}
-matplot(fhatsmooth,col="gray",type="l",xlab="Année",ylab="Dette")
-lines(meantemp$coefs,lwd=2)
-```
+matplot(fhatsmooth,col="gray",type="l",xlab="Année",ylab="Dette") # # courbes lissées
+lines(meantemp$coefs,lwd=2) # courbe moyenne
+``` 
 
 ## Covariance/Corrélation fonctionelle
 
