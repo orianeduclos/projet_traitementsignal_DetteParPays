@@ -3,6 +3,15 @@ title: "Margaux"
 format: html
 editor: visual
 ---
+# Introduction
+
+Ce projet vise à sélectionner et analyser un jeu de données fonctionnelles inédit, effectuer un lissage des données si nécessaire, puis appliquer et interpréter des méthodes de statistique exploratoire telles que la moyenne, la variance, la covariance, la corrélation et l'analyse en composantes principales (ACP) fonctionnelle.
+
+Notre étude se focalise sur la dette de divers pays dans le monde sur une période de 31 ans, allant de 1990 à 2021. La base de données initiale comprend 176 pays, mais nous avons décidé de restreindre notre analyse aux pays sans données égales à zéro, afin d'éviter tout biais. Ainsi, nous avons retenu 46 pays pour notre étude.
+
+Le jeu de données utilisé pour cette étude peut être retrouvé à l'adresse suivante : https://www.kaggle.com/datasets/mathurinache/detteparpays
+
+# Traitement de données 
 
 ```{r}
 library(ggplot2)
@@ -195,26 +204,9 @@ Ici, on voit que la moyenne diminuée ou augmentée de la première fonction pro
 On peut terminer par représenter nos individus (les pays) sur le premier plan factoriel. Afin de proposer une interprétation plus poussée, nous avons également récupéré une information liée à la présence ou non de chaque pays en tant que membre de l'OCDE (Indicateur reflétant le développement d'un pays) afin de voir si ces groupes de pays avaient des caractéristiques différentes.
 
 ```{r}
-colnames(don)[1]="United Arab Emirates"
-colnames(don)[9]="United Kingdom"
-colnames(don)[13]="United States"
-
-OCDE=read.csv("OCDE.csv",sep=";",header=T)
-pays=data.frame(Pays=colnames(don))
-
-info_pays=left_join(pays,OCDE,by="Pays")
-info_pays[is.na(info_pays)] <- 0
+plot.pca.fd(TempACPF)
 ```
 
-
-```{r}
-plot(TempACPF$scores[,1],TempACPF$scores[,2],pch=20,xlab="Axe 1", ylab="Axe 2",type="n")
-pays= colnames(don)
-IDH = as.factor(info_pays$Membre.de.l.OCDE)
-text(TempACPF$scores[,1],TempACPF$scores[,2],labels=pays,cex=0.7,col=as.numeric(IDH))
-legend("topleft",legend = levels(IDH),col=1:4,lty=1)
-
-```
 
 
 
