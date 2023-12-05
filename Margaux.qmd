@@ -90,8 +90,7 @@ ndf <- cbind(years,df)
 data_longer <-  ndf%>%pivot_longer(!years, names_to="pays", values_to="Dette")
 head(data_longer)
 ```
-
-# Statistiques descriptives
+# Statistiques descriptives 
 
 ### Courbe évolutive/Boxplot
 
@@ -127,13 +126,13 @@ xrange = c(1990, 2021)
 bspbasis = create.bspline.basis(xrange,norder=4,breaks=noeuds)
 plot(bspbasis,lwd=1.5)
 ```
-
 ```{r}
 for (colonne in names(df)) {
   df[[colonne]] <- as.numeric(df[[colonne]])
 }
 y=data.matrix(df)
 ```
+
 
 ```{r}
 # LISSAGE SUR L'ENSEMBLE DES COURBES 
@@ -148,16 +147,16 @@ for (i in 1:21){
 plot(gcv)
 which.min(gcv)
 ```
-
 # Analyses exploratoires
 
 ## Ecart-type fonctionnel
 
 On peut faire de même pour l'écart-type moyen et le mettre en relation avec l'espérance moyenne.
-
+ 
 ```{r}
 sdtemp = sd.fd(smoothdata$fd) #ecart-type (objet fonctionnel fd)
 ```
+
 
 ```{r}
 matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
@@ -166,7 +165,8 @@ fnsd  = eval.fd(xrange[1]:xrange[2],sdtemp)
 lines(fnmoy,lwd=2)
 lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
 lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
-```
+``` 
+
 
 ## ACP fonctionnelle
 
@@ -179,7 +179,7 @@ cumsum(TempACPF$varprop)
 On remarque que la première composante (97.3%) et la deuxieme composante (1.7%) représentent plus de 99% de la variabilité expliquée.
 
 On peut commencer par représenter les composantes principales obtenues.
-
+ 
 ```{r}
 plot(TempACPF$harmonics)
 ```
@@ -204,27 +204,27 @@ Ici, on voit que la moyenne diminuée ou augmentée de la première fonction pro
 On peut terminer par représenter nos individus (les pays) sur le premier plan factoriel. Afin de proposer une interprétation plus poussée, nous avons également récupéré une information liée à la présence ou non de chaque pays en tant que membre de l'OCDE (Indicateur reflétant le développement d'un pays) afin de voir si ces groupes de pays avaient des caractéristiques différentes.
 
 ```{r}
-<<<<<<< HEAD
-colnames(don)[1]="United Arab Emirates"
-colnames(don)[9]="United Kingdom"
-colnames(don)[13]="United States"
-
-OCDE=read.csv("OCDE.csv",sep=";",header=T)
-pays=data.frame(Pays=colnames(don))
-
-info_pays=left_join(pays,OCDE,by="Pays")
-info_pays[is.na(info_pays)] <- 0
+plot.pca.fd(TempACPF)
 ```
+
 
 ```{r}
-plot(TempACPF$scores[,1],TempACPF$scores[,2],pch=20,xlab="Axe 1", ylab="Axe 2",type="n")
-pays= colnames(don)
-IDH = as.factor(info_pays$Membre.de.l.OCDE)
-text(TempACPF$scores[,1],TempACPF$scores[,2],labels=pays,cex=0.7,col=as.numeric(IDH))
-legend("topleft",legend = levels(IDH),col=1:4,lty=1)
+# Installer ggplot2 si ce n'est pas déjà fait
+# install.packages("ggplot2")
+
+# Charger la bibliothèque ggplot2
+library(ggplot2)
+
+# Exemple de données fictives
+df <- data.frame(
+  France = c(100, 120, 150, 180, 200),
+  Germany = c(80, 90, 110, 130, 150),
+  UK = c(120, 130, 140, 160, 180)
+)
 
 
-plot.pca.fd(TempACPF)
 
 ```
+
+
 
