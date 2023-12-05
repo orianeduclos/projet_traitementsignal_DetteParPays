@@ -5,16 +5,14 @@ date: "2023-11-22"
 output: pdf_document
 ---
 
+# Introduction 
 
 # Prétraitement des données
+
 
 ```{r}
 data <- read.csv("archive/Dette_parpays.csv", header = TRUE)
 head(data)
-```
-
-```{r}
-summary(data)
 ```
 
 
@@ -34,7 +32,7 @@ for (colname in names(data)) {
   }
 }
 
-head(data)
+#head(data)
 ```
 
 

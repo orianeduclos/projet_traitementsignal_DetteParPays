@@ -81,7 +81,8 @@ ndf <- cbind(years,df)
 data_longer <-  ndf%>%pivot_longer(!years, names_to="pays", values_to="Dette")
 head(data_longer)
 ```
-# Statistiques descriptives 
+
+# Statistiques descriptives
 
 ### Courbe évolutive/Boxplot
 
@@ -117,13 +118,13 @@ xrange = c(1990, 2021)
 bspbasis = create.bspline.basis(xrange,norder=4,breaks=noeuds)
 plot(bspbasis,lwd=1.5)
 ```
+
 ```{r}
 for (colonne in names(df)) {
   df[[colonne]] <- as.numeric(df[[colonne]])
 }
 y=data.matrix(df)
 ```
-
 
 ```{r}
 # LISSAGE SUR L'ENSEMBLE DES COURBES 
@@ -138,16 +139,16 @@ for (i in 1:21){
 plot(gcv)
 which.min(gcv)
 ```
+
 # Analyses exploratoires
 
 ## Ecart-type fonctionnel
 
 On peut faire de même pour l'écart-type moyen et le mettre en relation avec l'espérance moyenne.
- 
+
 ```{r}
 sdtemp = sd.fd(smoothdata$fd) #ecart-type (objet fonctionnel fd)
 ```
-
 
 ```{r}
 matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
@@ -156,8 +157,7 @@ fnsd  = eval.fd(xrange[1]:xrange[2],sdtemp)
 lines(fnmoy,lwd=2)
 lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
 lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
-``` 
-
+```
 
 ## ACP fonctionnelle
 
@@ -170,7 +170,7 @@ cumsum(TempACPF$varprop)
 On remarque que la première composante (97.3%) et la deuxieme composante (1.7%) représentent plus de 99% de la variabilité expliquée.
 
 On peut commencer par représenter les composantes principales obtenues.
- 
+
 ```{r}
 plot(TempACPF$harmonics)
 ```
@@ -206,7 +206,6 @@ info_pays=left_join(pays,OCDE,by="Pays")
 info_pays[is.na(info_pays)] <- 0
 ```
 
-
 ```{r}
 plot(TempACPF$scores[,1],TempACPF$scores[,2],pch=20,xlab="Axe 1", ylab="Axe 2",type="n")
 pays= colnames(don)
@@ -215,7 +214,3 @@ text(TempACPF$scores[,1],TempACPF$scores[,2],labels=pays,cex=0.7,col=as.numeric(
 legend("topleft",legend = levels(IDH),col=1:4,lty=1)
 
 ```
-
-
-
-
