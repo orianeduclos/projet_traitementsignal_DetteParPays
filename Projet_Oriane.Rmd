@@ -5,6 +5,9 @@ date: "2023-11-22"
 output: pdf_document
 ---
 
+
+# Prétraitement des données
+
 ```{r}
 data <- read.csv("archive/Dette_parpays.csv", header = TRUE)
 head(data)
@@ -134,7 +137,7 @@ which.min(gcv)
 ```{r}
 lambda = exp(which.min(gcv)-10)
 lambda
-fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=lambda)
+fdparTemp = fdPar(splbasis,Lfdobj = 2,lambda=1)
 smoothdata = smooth.basis(years,y,fdParobj = fdparTemp)
 ```
 
@@ -164,6 +167,66 @@ meantemp = mean.fd(smoothdata$fd) #moyenne (objet fonctionnel fd)
 matplot(fhatsmooth,col="gray",type="l",xlab="Année",ylab="Dette")
 lines(meantemp$coefs,lwd=2)
 ```
+
+## Covariance/Corrélation fonctionelle
+
+### Covariance fonctionelle
+
+```{r}
+covtemp = var.fd(smoothdata$fd)
+surfcov = eval.bifd(xrange[1]:xrange[2],xrange[1]:xrange[2],covtemp)
+```
+
+
+```{r,echo=FALSE,include=FALSE,message=FALSE,warning=FALSE}
+nofColors <- 100
+colorFunc <- colorRampPalette(c('blue', 'red'));
+colors_   <- colorFunc(nofColors)
+z=surfcov
+z.centerValues <- (
+   z[      -1  ,      -1  ] +
+   z[      -1  , -ncol(z) ] +
+   z[ -nrow(z) ,      -1  ] +
+   z[ -nrow(z) , -ncol(z) ]
+) / 4
+
+z.colorBin <- cut(z.centerValues, nofColors);
+
+```
+
+
+
+```{r}
+
+persp(surfcov,theta=30,xlab="Années",ylab="Années",zlab="covariance",col=  colors_[z.colorBin],)
+
+```
+
+```{r}
+filled.contour(surfcov)
+```
+Ces deux graphiques ne nous montrent rien de particulier, ce n'est pas forcément étonnant dans la mesure où il n'y a pas forcément de causalité entre les émissions de CO2 des individus entre une année et une autre.
+
+### Corrélation fonctionelle
+
+
+```{r}
+cortemp = cor.fd(xrange[1]:xrange[2],smoothdata$fd)
+#renvoie directement la matrice de corrélation emprique évaluée en les points demandés
+```
+
+
+```{r}
+persp(cortemp,theta=90,phi=40,xlab="Années",ylab="Années",zlab="corrélation",col=  colors_[z.colorBin],)
+```
+
+```{r}
+filled.contour(cortemp)
+```
+
+
+
+Les 4 graphiques précédents mettent en évidence l'absence de corrélation entre les différentes plages de temps de notre jeu de données. Ces résultats sont plutôt logiques étant donnée l'absence de "cycle" dans nos données, contrairement aux données de températures par exemple où l'on retrouvait des températures proches entre le début et la fin d'une année.
 
 On remarque que l'évolution moyenne reprend en partie la tendance à la baisse des émissions de CO2 des pays sur les 30 dernières années.
 

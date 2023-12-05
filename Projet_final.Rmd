@@ -1,0 +1,89 @@
+---
+title: "Traitement des données de la dette par pays"
+
+subtitle: | 
+    | Traitement du signal et des images
+    | Université de Rennes II : Master Mathématiques Appliquées, Statistiques 
+author: | 
+    | Margaux Bailleul
+    | Oriane Duclos
+    
+
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+geometry: "left=2.5cm,right=2.5cm,top=2cm,bottom=2cm"
+fontfamily: mathpazo
+output:
+  pdf_document:
+    keep_tex: true
+    latex_engine: pdflatex
+    fig_caption: yes
+    highlight: haddock
+    number_sections: yes
+    toc: yes
+    toc_depth: 2
+    citation_package: natbib
+---
+
+# Introduction 
+
+# Prétaitement des données
+
+```{r}
+data <- read.csv("archive/Dette_parpays.csv", header = TRUE)
+head(data)
+```
+
+
+```{r}
+# Suppression des colonnes 'Region' et 'Image.URL' 
+data <- data[, !(names(data) %in% c("region", "Image.URL"))]
+
+for (colname in names(data)) {
+  # Vérifie si le nom de la colonne commence par 'X' suivi de 4 chiffres
+  if (grepl("^X[0-9]{4}$", colname)) {
+    # Suppression des virgules et conversion en numérique
+    data[[colname]] <- as.numeric(gsub(",", ".", data[[colname]]))
+
+    # Renommage de la colonne pour enlever le 'X'
+    names(data)[names(data) == colname] <- substr(colname, 2, nchar(colname))
+  }
+}
+
+#head(data)
+```
+
+
+```{r}
+library(tidyr)
+
+long_data <- pivot_longer(data, cols = -Country.Name, names_to = "Année", values_to = "Dette")
+
+df <- pivot_wider(long_data, names_from = Country.Name, values_from = Dette)
+df <- as.data.frame(df)
+
+# Mettre la colonne année en rownames
+rownames(df) <- df$Année
+
+# enlever la colonne année
+df <- df[, !(names(df) %in% c("Année"))]
+
+# enlever toutes les colonnes qui ont au moins un 0 dans la colonne
+df <- df[, colSums(df == 0) == 0]
+head(df)
+
+```
+
+```{r}
+summary(df)
+```
+
+Nous allons observer la dette de la France entre 1990 et 2021
+
+## Dette de la France 
+
+```{r}
+plot(df$France, type = "l", col = "blue", xlab = "Année", ylab = "Dette", main = "Dette de la France")
+```
+
+De 1990 à 2000, la dette augmente de manière relativement douce. Puis, la courbe semble plus plate, indiquant un ralentissement de l'augmentation de la dette ou une période de stagnation. Entre les années 2005 et 2010, il y a une augmentation rapide de la dette, ce qui pourrait correspondre à la crise financière mondiale de 2008 et ses répercussions économiques.Autour de l'année 2015, la dette semble atteindre un plateau, suivie d'une légère diminution qui pourrait indiquer des mesures d'austérité ou une croissance économique améliorant la capacité de la France à gérer sa dette.
+    Nouvelle augmentation : Vers la fin de la période, la dette semble augmenter de nouveau, ce qui pourrait être lié à des événements économiques récents, comme la crise du COVID-19 qui a nécessité des dépenses gouvernementales accrues pour soutenir l'économie.
