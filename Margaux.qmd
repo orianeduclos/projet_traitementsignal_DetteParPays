@@ -3,7 +3,6 @@ title: "Margaux"
 format: html
 editor: visual
 ---
-
 # Introduction
 
 Ce projet vise à sélectionner et analyser un jeu de données fonctionnelles inédit, effectuer un lissage des données si nécessaire, puis appliquer et interpréter des méthodes de statistique exploratoire telles que la moyenne, la variance, la covariance, la corrélation et l'analyse en composantes principales (ACP) fonctionnelle.
@@ -12,7 +11,7 @@ Notre étude se focalise sur la dette de divers pays dans le monde sur une péri
 
 Le jeu de données utilisé pour cette étude peut être retrouvé à l'adresse suivante : https://www.kaggle.com/datasets/mathurinache/detteparpays
 
-# Traitement de données
+# Traitement de données 
 
 ```{r}
 library(ggplot2)
@@ -91,8 +90,7 @@ ndf <- cbind(years,df)
 data_longer <-  ndf%>%pivot_longer(!years, names_to="pays", values_to="Dette")
 head(data_longer)
 ```
-
-# Statistiques descriptives
+# Statistiques descriptives 
 
 ### Courbe évolutive/Boxplot
 
@@ -128,13 +126,13 @@ xrange = c(1990, 2021)
 bspbasis = create.bspline.basis(xrange,norder=4,breaks=noeuds)
 plot(bspbasis,lwd=1.5)
 ```
-
 ```{r}
 for (colonne in names(df)) {
   df[[colonne]] <- as.numeric(df[[colonne]])
 }
 y=data.matrix(df)
 ```
+
 
 ```{r}
 # LISSAGE SUR L'ENSEMBLE DES COURBES 
@@ -149,16 +147,16 @@ for (i in 1:21){
 plot(gcv)
 which.min(gcv)
 ```
-
 # Analyses exploratoires
 
 ## Ecart-type fonctionnel
 
 On peut faire de même pour l'écart-type moyen et le mettre en relation avec l'espérance moyenne.
-
+ 
 ```{r}
 sdtemp = sd.fd(smoothdata$fd) #ecart-type (objet fonctionnel fd)
 ```
+
 
 ```{r}
 matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
@@ -167,7 +165,8 @@ fnsd  = eval.fd(xrange[1]:xrange[2],sdtemp)
 lines(fnmoy,lwd=2)
 lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
 lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
-```
+``` 
+
 
 ## ACP fonctionnelle
 
@@ -180,7 +179,7 @@ cumsum(TempACPF$varprop)
 On remarque que la première composante (97.3%) et la deuxieme composante (1.7%) représentent plus de 99% de la variabilité expliquée.
 
 On peut commencer par représenter les composantes principales obtenues.
-
+ 
 ```{r}
 plot(TempACPF$harmonics)
 ```
@@ -208,6 +207,7 @@ On peut terminer par représenter nos individus (les pays) sur le premier plan f
 plot.pca.fd(TempACPF)
 ```
 
+
 ```{r}
 # Installer ggplot2 si ce n'est pas déjà fait
 # install.packages("ggplot2")
@@ -225,3 +225,6 @@ df <- data.frame(
 
 
 ```
+
+
+
