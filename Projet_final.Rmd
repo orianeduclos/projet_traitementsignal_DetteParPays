@@ -50,11 +50,6 @@ head(data)
 ```
 
 ```{r}
-data$region
-```
-
-
-```{r}
 # Suppression des colonnes 'Region' et 'Image.URL' 
 data <- data[, !(names(data) %in% c("region", "Image.URL"))]
 
@@ -269,7 +264,7 @@ persp(surfcov,theta=30,xlab="Années",ylab="Années",zlab="covariance",col=  col
 filled.contour(surfcov)
 ```
 
-IMTERPRETATION
+INTERPRETATION
 
 ### Corrélation fonctionelle
 
@@ -298,13 +293,16 @@ sdtemp = sd.fd(smoothdata$fd) #ecart-type (objet fonctionnel fd)
 
 
 ```{r}
-matplot(fhatsmooth,col="gray",type="l",xlab="jours",ylab="temperature")
+matplot(fhatsmooth,col="gray",type="l",xlab="année",ylab="dettes")
 fnmoy = eval.fd(xrange[1]:xrange[2],meantemp)
 fnsd  = eval.fd(xrange[1]:xrange[2],sdtemp)
 lines(fnmoy,lwd=2)
 lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
 lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
 ``` 
+
+La variabilité suit plus ou moins la tendance générale de la dette dans le temps 
+
 
 ## ACP fonctionnelle
 
@@ -314,7 +312,7 @@ TempACPF$varprop
 cumsum(TempACPF$varprop)
 ```
 
-On remarque que la première composante (97.3%) et la deuxieme composante (1.7%) représentent plus de 99% de la variabilité expliquée.
+On remarque que la première composante (62.6%) et la deuxieme composante (23.7%) représentent plus de 86% de la variabilité expliquée.
 
 On peut commencer par représenter les composantes principales obtenues.
 
@@ -322,11 +320,10 @@ On peut commencer par représenter les composantes principales obtenues.
 plot(TempACPF$harmonics)
 ```
 
-On constate que la courbe noire prend des valeurs positives comme ce qui est attendu en général pour cette courbe. Elle semble bien prendre la variabilité de nos individus (pays) et leurs caractéristiques communes : Une tendance à la baisse
+On constate que la courbe noire, c'est à dire la première compososante principale, prend des valeurs positives comme ce qui est attendu en général pour cette courbe. Elle semble bien prendre la variabilité de nos individus (pays) et leurs caractéristiques communes : Une tendance à la hausse de la dette au fil du temps.
 
-En ce qui concerne la courbe rouge, elle est dans un premier temps négative puis positive. Elle reflète bien le changement de régime/ de comportements selon les individus.
+En ce qui concerne la courbe rouge, elle est dans un premier temps positive puis negative. Elle reflète bien le changement de comportements selon les individus.
 
-Pour faciliter l'interprétation on peut représenter la moyenne diminuée ou augmentée des premières fonctions propres.
 
 On peut utiliser la fonction `plot.pca.fd` pour cette représentation.
 
@@ -358,8 +355,6 @@ df <- data.frame(
   Germany = c(80, 90, 110, 130, 150),
   UK = c(120, 130, 140, 160, 180)
 )
-
-
 
 ```
 
