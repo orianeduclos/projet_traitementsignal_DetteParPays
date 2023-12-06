@@ -160,6 +160,10 @@ Pour donner deux exemples :
 
 2. En comparaison, le boxplot pour le Japon montre une médiane très élevée, et de très longues moustaches, indiquant que les valeurs ont énormément varié entre 1990 et 2021 pour le Japon. Si nous mettons ce graphique en relation avec le précédent, nous remarquons qu’effectivement le Japon a une dette qui n’a cessé d’augmenter.
 
+
+Nous allons utiliser la base splines pour modéliser nos données qui sont locales. Elles pourront alors s'adapter à des variations spécifiques dans des régions restreintes des données.
+
+
 # Lissage pénalisé des courbes 
 
 ```{r}
@@ -204,7 +208,6 @@ matplot(years,fhatsmooth-y,lty=1,type="l",ylab="residus")
 
 En examinant le graphique, on peut observer les points suivants que la variabilité des résidus semble décroître au fil du temps, avec des pics plus élevés autour des années 1990 et une stabilisation vers 2020. Cela pourrait indiquer que la précision des modèles de lissage s'est améliorée ou que la volatilité de la dette des pays a diminué au fil du temps.De plus, il y a quelques pics et creux significatifs, notamment au début des années 1990 et autour de l'année 2000, ce qui peut indiquer des événements spécifiques qui ont affecté la dette de manière significative et qui n'ont pas été entièrement capturés par le modèle de lissage.
 Dans l'ensemble, il n'y a pas de tendance claire ou de biais visible dans les résidus, ce qui suggère que le modèle de lissage ne présente pas de problèmes systématiques majeurs.
-
 
 # Statistiques descriptives 
 
@@ -251,7 +254,6 @@ z.centerValues <- (
 z.colorBin <- cut(z.centerValues, nofColors);
 
 ```
-
 
 
 ```{r}
@@ -343,18 +345,15 @@ plot.pca.fd(TempACPF)
 ```
 
 ```{r}
-# Installer ggplot2 si ce n'est pas déjà fait
-# install.packages("ggplot2")
-
-# Charger la bibliothèque ggplot2
-library(ggplot2)
-
-# Exemple de données fictives
-df <- data.frame(
-  France = c(100, 120, 150, 180, 200),
-  Germany = c(80, 90, 110, 130, 150),
-  UK = c(120, 130, 140, 160, 180)
+# Création du dataframe
+data <- data.frame(
+  Pays = c("Algeria", "Antigua and Barbuda", "Australia", "Austria", "Bahrain", "Belgium", "Canada", "Chile", "Comoros", "South Korea", "Dominica", "Spain", "Finland", "France", "Gabon", "Ghana", "Guinea", "Equatorial Guinea", "Honduras", "Iceland", "Italy", "Japan", "Jordan", "Kiribati", "Kuwait", "Lesotho", "Libya", "Madagascar", "Malaysia", "Morocco", "Norway", "New Zealand", "Oman", "Paraguay", "Netherlands","Portugal", "Qatar", "United Kingdom", "Saint Vincent and the Grenadines", "Saint Lucia", "Seychelles", "Singapore", "Sri Lanka", "Switzerland", "Suriname","Trinidad and Tobago"),
+  
+CatastropheNaturelle = c(0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1)
 )
+
+# Affichage du dataframe
+print(data)
 
 ```
 
