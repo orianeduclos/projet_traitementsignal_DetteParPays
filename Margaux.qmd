@@ -8,7 +8,7 @@ editor: visual
 
 Ce projet vise à sélectionner et analyser un jeu de données fonctionnelles inédit, effectuer un lissage des données si nécessaire, puis appliquer et interpréter des méthodes de statistique exploratoire telles que la moyenne, la variance, la covariance, la corrélation et l'analyse en composantes principales (ACP) fonctionnelle.
 
-Notre étude se focalise sur la dette de divers pays dans le monde sur une période de 31 ans, allant de 1990 à 2021. La base de données initiale comprend 176 pays, mais nous avons décidé de restreindre notre analyse aux pays sans données égales à zéro, afin d'éviter tout biais. Ainsi, nous avons retenu 46 pays pour notre étude.
+Notre étude se focalise sur la dette de divers pays dans le monde sur une période de 31 ans, allant de 1990 à 2021. Les données sont exprimées en pourcentage de PIB du pays. La base de données initiale comprend 176 pays, mais nous avons décidé de restreindre notre analyse aux pays sans données égales à zéro, afin d'éviter tout biais. Ainsi, nous avons retenu 46 pays pour notre étude.
 
 Le jeu de données utilisé pour cette étude peut être retrouvé à l'adresse suivante : https://www.kaggle.com/datasets/mathurinache/detteparpays
 
@@ -27,15 +27,11 @@ library(RColorBrewer)
 
 ```{r}
 data <- read.csv("archive/Dette_parpays.csv", header = TRUE)
-head(data)
 ```
 
-```{r}
-summary(data)
-```
 
 ```{r}
-# Suppression des colonnes 'Region' et 'Image.URL' sans utiliser dplyr
+# Suppression des colonnes 'Region' et 'Image.URL' 
 data <- data[, !(names(data) %in% c("region", "Image.URL"))]
 
 for (colname in names(data)) {
@@ -48,33 +44,23 @@ for (colname in names(data)) {
     names(data)[names(data) == colname] <- substr(colname, 2, nchar(colname))
   }
 }
-
-head(data)
 ```
 
 ```{r}
-
-library(tidyr)
-
 long_data <- pivot_longer(data, cols = -Country.Name, names_to = "Année", values_to = "Dette")
 
 df <- pivot_wider(long_data, names_from = Country.Name, values_from = Dette)
 df <- as.data.frame(df)
-head(df)
 
 # Mettre la colonne année en rownames
 rownames(df) <- df$Année
-head(df)
 
-# enlever la colonne année
+# Enlever la colonne année
 df <- df[, !(names(df) %in% c("Année"))]
-head(df)
 
-# enlever toutes les colonnes qui ont au moins un 0 dans la colonne
+# Enlever toutes les colonnes qui ont au moins un 0 dans la colonne
 df <- df[, colSums(df == 0) == 0]
 head(df)
-
-
 ```
 
 # Trace de la dette de la France de 1990 à 2021

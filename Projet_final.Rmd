@@ -26,17 +26,18 @@ output:
 
 # Environnement de travail 
 
-```{r}
+```{r include=FALSE}
 library(fda) 
 library(dplyr) 
 library(tidyverse) 
+library(tidyr)
 ```
 
 # Introduction
 
 Ce projet vise à sélectionner et analyser un jeu de données fonctionnelles inédit, effectuer un lissage des données si nécessaire, puis appliquer et interpréter des méthodes de statistique exploratoire telles que la moyenne, la variance, la covariance, la corrélation et l'analyse en composantes principales (ACP) fonctionnelle.
 
-Notre étude se focalise sur la dette de divers pays dans le monde sur une période de 31 ans, allant de 1990 à 2021. La base de données initiale comprend 176 pays, mais nous avons décidé de restreindre notre analyse aux pays sans données égales à zéro, afin d'éviter tout biais. Ainsi, nous avons retenu 46 pays pour notre étude.
+Notre étude se focalise sur la dette de divers pays dans le monde sur une période de 31 ans, allant de 1990 à 2021. Les données sont exprimées en pourcentage de PIB du pays. La base de données initiale comprend 176 pays, mais nous avons décidé de restreindre notre analyse aux pays sans données égales à zéro, afin d'éviter tout biais. Ainsi, nous avons retenu 46 pays pour notre étude.
 
 Le jeu de données utilisé pour cette étude peut être retrouvé à l'adresse suivante : https://www.kaggle.com/datasets/mathurinache/detteparpays
 
@@ -46,7 +47,6 @@ Le jeu de données utilisé pour cette étude peut être retrouvé à l'adresse 
 ```{r}
 #Importation des données
 data <- read.csv("archive/Dette_parpays.csv", header = TRUE)
-head(data)
 ```
 
 ```{r}
@@ -63,61 +63,57 @@ for (colname in names(data)) {
     names(data)[names(data) == colname] <- substr(colname, 2, nchar(colname))
   }
 }
-
-#head(data)
 ```
 
 Notons que nous avons choisit de prendre que les pays avec des données non nulles. En effet, nous avons remarqué que certains pays avaient des données nulles sur certaines années. Nous avons donc décidé de ne pas prendre en compte ces pays pour notre étude. Il nous reste ainsi 46 pays à étudier.
 
 ```{r}
-library(tidyr)
-
 long_data <- pivot_longer(data, cols = -Country.Name, names_to = "Année", values_to = "Dette")
 
 df <- pivot_wider(long_data, names_from = Country.Name, values_from = Dette)
 df <- as.data.frame(df)
 
-# Mettre la colonne année en rownames
+# On met la colonne année en rownames
 rownames(df) <- df$Année
 
-# enlever la colonne année
+# On enlève la colonne année
 df <- df[, !(names(df) %in% c("Année"))]
 
-# enlever toutes les colonnes qui ont au moins un 0 dans la colonne
+# On enlève toutes les colonnes qui ont au moins un 0 dans la colonne
 df <- df[, colSums(df == 0) == 0]
 head(df)
-
 ```
 
 ```{r eval=FALSE, include=FALSE}
 summary(df)
 ```
 
-Nous allons observer la dette de la France entre 1990 et 2021
+Nous allons observer la dette de la France entre 1990 et 2021. 
 
 ## Dette de la France 
 
 ```{r}
 df_copie <- df
-# Utiliser les rownames comme variable pour les années
+
+# On utilise les rownames comme variable pour les années
 df_copie$Annee <- as.numeric(rownames(df_copie))
 
-# Filtrer le data frame pour ne conserver que les données de la France
+# On filtre le data frame pour ne conserver que les données de la France
 df_france <- df_copie[, c("Annee", "France")]
 
-# Convertir le data frame en format long avec tidyr
+# On convertit le data frame en format long avec tidyr
 df_france_long <- gather(df_france, key = "Pays", value = "Dette", -Annee)
 
-# Créer le ggplot
+# On crée le ggplot
 ggplot(df_france_long, aes(x = Annee, y = Dette)) +
   geom_line() +
   labs(title = "Dette de la France au fil du temps",
        x = "Année",
-       y = "Dette") +
+       y = "Pourcentage du PIB") +
   theme_minimal()
 ```
 
-De 1990 à 2000, la dette augmente de manière relativement douce. Puis, la courbe semble plus plate, indiquant un ralentissement de l'augmentation de la dette ou une période de stagnation. Entre les années 2005 et 2010, il y a une augmentation rapide de la dette, ce qui pourrait correspondre à la crise financière mondiale de 2008 et ses répercussions économiques.Autour de l'année 2015, la dette semble atteindre un plateau, suivie d'une légère diminution qui pourrait indiquer des mesures d'austérité ou une croissance économique améliorant la capacité de la France à gérer sa dette. Vers la fin de la période, la dette semble augmenter de nouveau, ce qui pourrait être lié à des événements économiques récents, comme la crise du COVID-19 qui a nécessité des dépenses gouvernementales accrues pour soutenir l'économie.
+De 1990 à 2000, la dette augmente de manière relativement douce. Puis, la courbe semble plus plate, indiquant une période de stagnation. Entre les années 2005 et 2010, il y a une augmentation rapide de la dette, ce qui pourrait correspondre à la crise financière mondiale de 2008 et ses répercussions économiques. Autour de l'année 2015, la dette semble atteindre un plateau, suivie d'une légère diminution qui pourrait indiquer des mesures d'austérité ou une croissance économique améliorant la capacité de la France à gérer sa dette. Vers la fin de la période, la dette semble augmenter de nouveau, ce qui pourrait être lié à des événements économiques récents, comme la crise du COVID-19 qui a nécessité des dépenses gouvernementales accrues pour soutenir l'économie.
 
 
 ## Courbe évolutive/Boxplot des pays retenus
@@ -127,7 +123,6 @@ De 1990 à 2000, la dette augmente de manière relativement douce. Puis, la cour
 years <- 1990:2021
 ndf <- cbind(years,df)
 data_longer <-  ndf%>%pivot_longer(!years, names_to="pays", values_to="Dette")
-#head(data_longer)
 ```
 
 
@@ -135,13 +130,13 @@ data_longer <-  ndf%>%pivot_longer(!years, names_to="pays", values_to="Dette")
 library(ggplot2)
 ggplot(data_longer, aes(x=years, y=Dette, color=pays)) + geom_line() +  
   xlab("Années") +
-  ylab("Dette") +
-  ggtitle("Figure 1:  Dette  pour chaque pays au cours du temps ")
+  ylab("Pourcentage du PIB") +
+  ggtitle("Dette  pour chaque pays au cours du temps ")
 ```
 
-Ce graphique représente l'évolution de la dette de différents pays au fil du temps. L'axe des ordonnées indique le niveau de dette tandis que l'axe des abscisses représente les années de 1990 à 2021.
+Ce graphique représente l'évolution de la dette de différents pays au fil du temps. L'axe des ordonnées indique le pourcentage du PIB tandis que l'axe des abscisses représente les années de 1990 à 2021.
 
-On observe une grande variabilité dans les trajectoires de la dette des différents pays. Certains montrent des pics très élevés, indiquant une augmentation significative de la dette pendant certaines périodes, tandis que d'autres présentent des trajectoires plus stables. La diversité des tendances suggère des contextes économiques très différents. Nous pouvons observer que certains pays se démarquent des autres, tels que le Japon (dont la dette n’a cessé d’augmenter) et les Seychelles qui ont eu un pic aux alentours des années 2000.
+On observe une grande variabilité dans les trajectoires de la dette des différents pays. Certains montrent des pics très élevés, indiquant une augmentation significative de la dette pendant certaines périodes, tandis que d'autres présentent des trajectoires plus stables. La diversité des tendances suggère des contextes économiques très différents. Nous pouvons observer que certains pays se démarquent des autres, tels que le Japon (dont la dette n’a cessé d’augmenter depuis 1990) et les Seychelles qui ont eu un pic aux alentours des années 2000.
 
 
 ```{r}
@@ -169,44 +164,51 @@ Nous allons utiliser la base splines pour modéliser nos données qui sont local
 ```{r}
 #  Transformation du df en matrice
 y=data.matrix(df)
-#y
-xrange = range(as.numeric(rownames(y))) # range des années
+
+xrange = range(as.numeric(rownames(y)))
 ```
 
 
-```{r}
+```{r warning=FALSE}
 splbasis = create.bspline.basis(xrange,norder=6,breaks=years)
+
 gcv = 1:40
 for (i in 1:40){
   lambda = exp(i-10)
   fdparTemp = fdPar(splbasis,Lfdobj = 4,lambda=lambda)
   smoothdata = smooth.basis(years,y,fdParobj = fdparTemp)
-  gcv[i] = mean(smoothdata$gcv) #n valeur de critere general pour un lambda donnée soit la moyenne 
+  gcv[i] = mean(smoothdata$gcv) 
 }
+
 plot(gcv)
 which.min(gcv)
 ```
 
-On remarque que le pic le plus bas ce situe à environ 5. 
+On remarque que le pic le plus bas ce situe à environ 5. Nous allons donc choisir ce lambda pour la suite de notre analyse.
 
 ```{r}
-lambda = exp(which.min(gcv)-10) # choix du lambda qui minimise le critere general
+lambda = exp(which.min(gcv)-10) 
 fdparTemp = fdPar(splbasis,Lfdobj = 4,lambda=lambda) 
-smoothdata = smooth.basis(years,y,fdParobj = fdparTemp) # # ajustement des données (obj fonctionnnelle qui contient l'ensemble des courbes lisées)
+smoothdata = smooth.basis(years,y,fdParobj = fdparTemp)
 ```
 
+Ici on choisit le lambda qui minimise le critère général pour ensuite ajuster les données. On obtient alors un objet fonctionnel qui contient les données lissées.
+
 ```{r}
-fhatsmooth = eval.fd(years,smoothdata$fd) # evaluation de l'objet fonctionnel fd
+fhatsmooth = eval.fd(years,smoothdata$fd)
 par(mfrow=c(1,2)) 
 matplot(years,y,type="l",lty=1,ylab="",main="donnees brutes")
-matplot(years,fhatsmooth,type="l",lty=1,ylab="",main="donnees lissees")  # chaque courbe un obj fonctionnelle que nous avons estimé 
+matplot(years,fhatsmooth,type="l",lty=1,ylab="",main="donnees lissees")  
 ```
+
+On évalue ensuite l'objet fonctionnel. On obtient alors deux graphiques : le premier représente les données brutes et le second les données lissées. On remarque que les données lissées sont plus régulières et moins bruitées que les données brutes. 
 
 ```{r}
 matplot(years,fhatsmooth-y,lty=1,type="l",ylab="residus")
 ```
 
-En examinant le graphique, on peut observer les points suivants que la variabilité des résidus semble décroître au fil du temps, avec des pics plus élevés autour des années 1990 et une stabilisation vers 2020. Cela pourrait indiquer que la précision des modèles de lissage s'est améliorée ou que la volatilité de la dette des pays a diminué au fil du temps.De plus, il y a quelques pics et creux significatifs, notamment au début des années 1990 et autour de l'année 2000, ce qui peut indiquer des événements spécifiques qui ont affecté la dette de manière significative et qui n'ont pas été entièrement capturés par le modèle de lissage.
+En examinant le graphique, on peut observer que la variabilité des résidus semble décroître au fil du temps, avec des pics plus élevés autour des années 1990 et une stabilisation vers 2020. Cela pourrait indiquer que la précision des modèles de lissage s'est améliorée. De plus, il y a quelques pics et creux significatifs, notamment au début des années 1990 et autour de l'année 2000, ce qui peut indiquer des événements spécifiques qui ont affecté la dette de manière significative et qui n'ont pas été entièrement capturés par le modèle de lissage.
+
 Dans l'ensemble, il n'y a pas de tendance claire ou de biais visible dans les résidus, ce qui suggère que le modèle de lissage ne présente pas de problèmes systématiques majeurs.
 
 # Statistiques descriptives 
@@ -216,8 +218,7 @@ Dans l'ensemble, il n'y a pas de tendance claire ou de biais visible dans les r�
 On peut représenter l'évolution "moyenne" des dettes en traçant la moyenne empirique fonctionnelle.
 
 ```{r}
-meantemp = mean.fd(smoothdata$fd) #moyenne (objet fonctionnel fd)
-# meantemp # #obj fonctionnelle (coef dans la base de fonction que nous avons choisit(fonction moyenne ici))
+meantemp = mean.fd(smoothdata$fd)
 ```
 
 ```{r}
@@ -255,12 +256,11 @@ z.colorBin <- cut(z.centerValues, nofColors);
 
 ```
 
-
 ```{r}
-
 persp(surfcov,theta=30,xlab="Années",ylab="Années",zlab="covariance",col=  colors_[z.colorBin],)
-
 ```
+
+INTERPRETATION
 
 ```{r}
 filled.contour(surfcov)
@@ -270,20 +270,21 @@ INTERPRETATION
 
 ### Corrélation fonctionelle
 
-
 ```{r}
 cortemp = cor.fd(xrange[1]:xrange[2],smoothdata$fd)
-#renvoie directement la matrice de corrélation emprique évaluée en les points demandés
 ```
-
 
 ```{r}
 persp(cortemp,theta=90,phi=40,xlab="Années",ylab="Années",zlab="corrélation",col=  colors_[z.colorBin],)
 ```
 
+INTERPRETATION
+
 ```{r}
 filled.contour(cortemp)
 ```
+
+INTERPRETATION
 
 ## Ecart-type fonctionnel
 
@@ -292,7 +293,6 @@ On peut faire de même pour l'écart-type moyen et le mettre en relation avec l'
 ```{r}
 sdtemp = sd.fd(smoothdata$fd) #ecart-type (objet fonctionnel fd)
 ```
-
 
 ```{r}
 matplot(fhatsmooth,col="gray",type="l",xlab="année",ylab="dettes")
@@ -303,8 +303,7 @@ lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
 lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
 ``` 
 
-La variabilité suit plus ou moins la tendance générale de la dette dans le temps 
-
+La variabilité suit plus ou moins la tendance générale de la dette dans le temps.
 
 ## ACP fonctionnelle
 
@@ -322,12 +321,9 @@ On peut commencer par représenter les composantes principales obtenues.
 plot(TempACPF$harmonics)
 ```
 
-On constate que la courbe noire, c'est à dire la première compososante principale, prend des valeurs positives comme ce qui est attendu en général pour cette courbe. Elle semble bien prendre la variabilité de nos individus (pays) et leurs caractéristiques communes : Une tendance à la hausse de la dette au fil du temps.
+On constate que la courbe noire, c'est à dire la première compososante principale, prend des valeurs positives comme ce qui est attendu en général pour cette courbe. Elle semble bien prendre la variabilité de nos individus (pays) et leurs caractéristiques communes. Une tendance à la hausse de la dette au fil du temps.
 
-En ce qui concerne la courbe rouge, elle est dans un premier temps positive puis negative. Elle reflète bien le changement de comportements selon les individus.
-
-
-On peut utiliser la fonction `plot.pca.fd` pour cette représentation.
+Nous allons le représenter graphiquement : 
 
 ```{r}
 par(mfrow=c(2,2))
@@ -336,14 +332,17 @@ plot.pca.fd(TempACPF)
 
 Ici, on voit que la moyenne diminuée ou augmentée de la première fonction propre permet de retracer presque parfaitement l'allure générale de notre jeu de données. Ce n'est pas étonnant étant donné que la première composante explique plus de 97% de la variabilité de notre jeu de données. Ainsi, sans surprise, la moyenne augmentée ou diminuée des fonctions propres 2,3 ou 4 n'offre aucune plus-value utile pour l'interprétation.
 
+INTERPRETATION
+
 ### Représentation des individus dans le premier plan factoriel
 
-On peut terminer par représenter nos individus (les pays) sur le premier plan factoriel. Afin de proposer une interprétation plus poussée, nous avons également récupéré une information liée à la présence ou non de chaque pays en tant que membre de l'OCDE (Indicateur reflétant le développement d'un pays) afin de voir si ces groupes de pays avaient des caractéristiques différentes.
+On peut terminer par représenter nos individus (les pays) sur le premier plan factoriel. Afin de proposer une interprétation plus poussée, nous avons également créé une base de données à partir d'informations collectées sur internet, liées à la présence ou non de crises humanitaires ou de catastrophes naturelles dans les pays concernés. La véracité des données n'est cependant pas avérée. 
 
 ```{r}
 plot.pca.fd(TempACPF)
 ```
 
+INTERPRETATION
 
 ```{r}
 Pays = c("Algeria", "Antigua and Barbuda", "Australia", "Austria", "Bahrain", "Belgium",
@@ -363,7 +362,6 @@ pays <- data.frame(Pays=colnames(df))
 info_cata <- left_join(pays,cata,by="Pays")
 ```
 
-
 ```{r}
 plot(TempACPF$scores[,1],TempACPF$scores[,2],pch=20,xlab="Axe 1", ylab="Axe 2",type="n")
 pays <- colnames(df)
@@ -371,3 +369,10 @@ Catastrophe = as.factor(info_cata$CatastropheNaturelle)
 text(TempACPF$scores[,1],TempACPF$scores[,2],labels=pays,cex=0.7,col=as.numeric(Catastrophe))
 legend("topleft",legend = levels(Catastrophe),col=1:4,lty=1)
 ```
+
+INTERPRETATION
+
+# Conclusion
+
+INTERPRETATION
+
