@@ -260,13 +260,13 @@ z.colorBin <- cut(z.centerValues, nofColors);
 persp(surfcov,theta=30,xlab="Années",ylab="Années",zlab="covariance",col=  colors_[z.colorBin],)
 ```
 
-INTERPRETATION
+Le rouge indique des valeurs élevées et le bleu des valeurs plus faibles, on pourrait dire que la covariance était relativement élevée pour les paires d'années situées vers le coin arrière gauche du graphique et qu'elle diminue pour les paires d'années plus récentes.
 
 ```{r}
 filled.contour(surfcov)
 ```
 
-INTERPRETATION
+Sur la diagonale, nous observons une variabilité plus forte sur la fin et le debut de notre période.
 
 ### Corrélation fonctionelle
 
@@ -278,13 +278,9 @@ cortemp = cor.fd(xrange[1]:xrange[2],smoothdata$fd)
 persp(cortemp,theta=90,phi=40,xlab="Années",ylab="Années",zlab="corrélation",col=  colors_[z.colorBin],)
 ```
 
-INTERPRETATION
-
 ```{r}
 filled.contour(cortemp)
 ```
-
-INTERPRETATION
 
 ## Ecart-type fonctionnel
 
@@ -303,7 +299,7 @@ lines(fnmoy+2*fnsd,lwd=2,col=4,lty=2)
 lines(fnmoy-2*fnsd,lwd=2,col=4,lty=2)
 ``` 
 
-La variabilité suit plus ou moins la tendance générale de la dette dans le temps.
+Les lignes bleues en pointillés représentent la moyenne plus ou moins deux fois l'écart-type fonctionnel. Cela indique l'intervalle de confiance autour de la moyenne, montrant où la majorité des trajectoires devraient se trouver si elles suivent une distribution normale. Ici, les données sont dispersées autour de la moyenne qui est relativement stable dans le temps.
 
 ## ACP fonctionnelle
 
@@ -329,20 +325,15 @@ Nous allons le représenter graphiquement :
 par(mfrow=c(2,2))
 plot.pca.fd(TempACPF)
 ```
+La PCA function 1 montre la première harmonique, qui explique le plus grand pourcentage de la variabilité. La variation semble être assez constante sur le temps.
+La deuxième harmonique montre une tendance descendante, suggérant qu'elle capture une tendance linéaire ou quasi linéaire dans les données.
+Puis les deux autres montrent des schémas de variation plus complexes et oscillatoires, indiquant qu'elles capturent des dynamiques plus subtiles dans les données.
 
-Ici, on voit que la moyenne diminuée ou augmentée de la première fonction propre permet de retracer presque parfaitement l'allure générale de notre jeu de données. Ce n'est pas étonnant étant donné que la première composante explique plus de 97% de la variabilité de notre jeu de données. Ainsi, sans surprise, la moyenne augmentée ou diminuée des fonctions propres 2,3 ou 4 n'offre aucune plus-value utile pour l'interprétation.
-
-INTERPRETATION
 
 ### Représentation des individus dans le premier plan factoriel
 
 On peut terminer par représenter nos individus (les pays) sur le premier plan factoriel. Afin de proposer une interprétation plus poussée, nous avons également créé une base de données à partir d'informations collectées sur internet, liées à la présence ou non de crises humanitaires ou de catastrophes naturelles dans les pays concernés. La véracité des données n'est cependant pas avérée. 
 
-```{r}
-plot.pca.fd(TempACPF)
-```
-
-INTERPRETATION
 
 ```{r}
 Pays = c("Algeria", "Antigua and Barbuda", "Australia", "Austria", "Bahrain", "Belgium",
@@ -370,7 +361,7 @@ text(TempACPF$scores[,1],TempACPF$scores[,2],labels=pays,cex=0.7,col=as.numeric(
 legend("topleft",legend = levels(Catastrophe),col=1:4,lty=1)
 ```
 
-INTERPRETATION
+La répartition des pays sur le graphique ne montre pas de regroupement distinct ou de séparation en fonction de la variable binaire, ce qui indique que la survenue d'une crise humanitaire ou d'une catastrophe naturelle  ne semble pas avoir un impact visible sur la position des pays dans l'espace de l'ACP, au moins en ce qui concerne les deux premières composantes principales. Cela peut signifier que ces événements n'ont pas de corrélation directe avec les niveaux de dette tels que capturés par les deux principales dimensions de variation dans l'ensemble des données. En ce qui concerne le Japon, il apparaît comme un point extrême le long de l'axe 1, loin des autres pays. Cela suggère que le Japon a une valeur de dette qui est très différente de celle des autres pays.
 
 # Conclusion
 

@@ -199,11 +199,15 @@ z.colorBin <- cut(z.centerValues, nofColors);
 persp(surfcov,theta=30,xlab="Années",ylab="Années",zlab="covariance",col=  colors_[z.colorBin],)
 
 ```
+Le rouge indique des valeurs élevées et le bleu des valeurs plus faibles, on pourrait dire que la covariance était relativement élevée pour les paires d'années situées vers le coin arrière gauche du graphique et qu'elle diminue pour les paires d'années plus récentes.
+
 
 ```{r}
 filled.contour(surfcov)
 ```
-Ces deux graphiques ne nous montrent rien de particulier, ce n'est pas forcément étonnant dans la mesure où il n'y a pas forcément de causalité entre les émissions de CO2 des individus entre une année et une autre.
+
+On observe là encore (sur la diagonale) une variabilité plus forte sur la fin et le debut de notre période. 
+
 
 ### Corrélation fonctionelle
 
@@ -223,32 +227,6 @@ filled.contour(cortemp)
 ```
 
 
-
-Les 4 graphiques précédents mettent en évidence l'absence de corrélation entre les différentes plages de temps de notre jeu de données. Ces résultats sont plutôt logiques étant donnée l'absence de "cycle" dans nos données, contrairement aux données de températures par exemple où l'on retrouvait des températures proches entre le début et la fin d'une année.
-
-On remarque que l'évolution moyenne reprend en partie la tendance à la baisse des émissions de CO2 des pays sur les 30 dernières années.
-
-Entre 1990 et 2021, la situation de la dette des pays dans le monde a connu plusieurs développements majeurs :
-
-    Années 1990 - Crises de la Dette et Restructurations :
-        Crises en Amérique Latine et en Asie : Dans les années 1990, plusieurs pays d'Amérique Latine, puis des pays asiatiques (comme la Corée du Sud, l'Indonésie, et la Thaïlande), ont connu de graves crises financières. Ces crises ont été souvent liées à une dette extérieure excessive et à des flux de capitaux spéculatifs.
-        Restructuration de la Dette : Ces crises ont entraîné des programmes de restructuration de la dette avec le soutien du Fonds Monétaire International (FMI) et de la Banque Mondiale, parfois accompagnés de politiques d'austérité.
-
-    Début des Années 2000 - Stabilité et Croissance :
-        Après les crises des années 1990, de nombreux pays ont connu une période de stabilité et de croissance économique. Cela a permis à certains pays de réduire leur ratio de dette par rapport au PIB.
-        Allègement de la Dette pour les Pays Pauvres : Des initiatives comme l'Initiative en faveur des pays pauvres très endettés (PPTE) ont été mises en place pour alléger la dette des nations les plus pauvres.
-
-    Crise Financière de 2008 :
-        Augmentation de la Dette en Occident : La crise financière de 2008 a entraîné un accroissement considérable de la dette publique dans de nombreux pays développés, en raison des plans de sauvetage des banques et des mesures de relance économique.
-        Effets à Long Terme : Les effets de cette crise se sont ressentis pendant plusieurs années, avec des politiques d'austérité mises en place dans certains pays, notamment en Europe.
-
-    Années 2010 - Divergence entre les Pays Développés et en Développement :
-        Les pays développés ont continué à gérer les conséquences de la crise financière, avec des politiques monétaires assouplies menant à des taux d'intérêt bas, facilitant ainsi le service de la dette.
-        Dans le même temps, plusieurs pays en développement ont accru leur endettement, profitant des conditions favorables sur les marchés financiers.
-
-    Pandémie de COVID-19 (2020-2021) :
-        Nouvelle Augmentation de la Dette : La pandémie a entraîné une augmentation massive de la dette publique mondiale, les gouvernements finançant des plans de soutien massifs pour leurs économies et leurs systèmes de santé.
-        Défis à Long Terme : La pandémie a mis en lumière les défis liés à la dette pour de nombreux pays, avec des préoccupations croissantes concernant la soutenabilité de la dette à long terme.
 
 En résumé, la période de 1990 à 2021 a été marquée par des cycles de crise et de reprise, avec des moments de tension financière suivis de périodes de stabilisation. La tendance générale a été une augmentation de la dette, en particulier suite à des événements majeurs comme la crise financière de 2008 et la pandémie de COVID-19.
 
